@@ -29,6 +29,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+func PrintDefaultKubernetesVersion(output io.Writer) {
+	fmt.Fprintf(output, "%s\n", constants.DefaultKubernetesVersion)
+}
+
 func PrintKubernetesVersionsFromGCS(output io.Writer) {
 	PrintKubernetesVersions(output, constants.KubernetesVersionGCSURL)
 }

@@ -23,6 +23,16 @@ import (
 	"k8s.io/minikube/pkg/minikube/kubernetes_versions"
 )
 
+// getK8sVersionCmd represents the ip command
+var getK8sVersionCmd = &cobra.Command{
+	Use:   "get-k8s-version",
+	Short: "Gets the default Kubernetes version used with minikube when using the kubeadm bootstrapper",
+	Long:  "Gets the default Kubernetes version used with minikube when using the kubeadm bootstrapper",
+	Run: func(cmd *cobra.Command, args []string) {
+		kubernetes_versions.PrintDefaultKubernetesVersion(os.Stdout)
+	},
+}
+
 // getK8sVersionsCmd represents the ip command
 var getK8sVersionsCmd = &cobra.Command{
 	Use:   "get-k8s-versions",
@@ -34,5 +44,6 @@ var getK8sVersionsCmd = &cobra.Command{
 }
 
 func init() {
+	RootCmd.AddCommand(getK8sVersionCmd)
 	RootCmd.AddCommand(getK8sVersionsCmd)
 }
