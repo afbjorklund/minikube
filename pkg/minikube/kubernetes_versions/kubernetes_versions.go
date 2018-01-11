@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -29,8 +30,33 @@ import (
 	"github.com/pkg/errors"
 )
 
-func PrintDefaultKubernetesVersion(output io.Writer) {
-	fmt.Fprintf(output, "%s\n", constants.DefaultKubernetesVersion)
+func PrintKubernetesVersion(output io.Writer) {
+	fmt.Fprintf(output, "DefaultVersion: %s\n", constants.DefaultKubernetesVersion)
+	PrintKubernetesVersionURL(output, constants.KubernetesStableReleaseURL)
+}
+
+func PrintKubernetesVersionURL(output io.Writer, url string) {
+	version, err := GetUrl(url)
+	if err != nil {
+		return
+	}
+	fmt.Fprintf(output, "LatestVersion: %s\n", version)
+}
+
+func GetUrl(url string) (string, error) {
+	r, err := http.Get(url)
+	if err != nil {
+		return "", errors.Wrap(err, "Error downloading.")
+	} else if r.StatusCode != http.StatusOK {
+		return "", errors.Errorf("Error downloading. Got HTTP Error: %s", r.Status)
+	}
+
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return "", errors.Wrap(err, "Error reading.")
+	}
+	return strings.Trim(string(body), "\n"), nil
 }
 
 func PrintKubernetesVersionsFromGCS(output io.Writer) {

@@ -97,6 +97,7 @@ const (
 	DefaultAddonListFormat     = "- {{.AddonName}}: {{.AddonStatus}}\n"
 	DefaultConfigViewFormat    = "- {{.ConfigKey}}: {{.ConfigValue}}\n"
 	DefaultCacheListFormat     = "{{.CacheImage}}\n"
+	KubernetesStableReleaseURL = "https://storage.googleapis.com/kubernetes-release/release/stable.txt"
 	GithubMinikubeReleasesURL  = "https://storage.googleapis.com/minikube/releases.json"
 	KubernetesVersionGCSURL    = "https://storage.googleapis.com/minikube/k8s_releases.json"
 	DefaultWait                = 20

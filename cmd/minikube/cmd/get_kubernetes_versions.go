@@ -29,7 +29,7 @@ var getK8sVersionCmd = &cobra.Command{
 	Short: "Gets the default Kubernetes version used with minikube when using the kubeadm bootstrapper",
 	Long:  "Gets the default Kubernetes version used with minikube when using the kubeadm bootstrapper",
 	Run: func(cmd *cobra.Command, args []string) {
-		kubernetes_versions.PrintDefaultKubernetesVersion(os.Stdout)
+		kubernetes_versions.PrintKubernetesVersion(os.Stdout)
 	},
 }
 
