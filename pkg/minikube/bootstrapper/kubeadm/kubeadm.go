@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"crypto"
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"strings"
@@ -104,7 +105,7 @@ func (k *KubeadmBootstrapper) GetClusterStatus() (string, error) {
 
 // TODO(r2d4): Should this aggregate all the logs from the control plane?
 // Maybe subcommands for each component? minikube logs apiserver?
-func (k *KubeadmBootstrapper) GetClusterLogs(follow bool) (string, error) {
+func (k *KubeadmBootstrapper) GetClusterLogsTo(follow bool, out io.Writer) error {
 	var flags []string
 	if follow {
 		flags = append(flags, "-f")
@@ -112,35 +113,49 @@ func (k *KubeadmBootstrapper) GetClusterLogs(follow bool) (string, error) {
 	logsCommand := fmt.Sprintf("sudo journalctl %s -u kubelet", strings.Join(flags, " "))
 
 	if follow {
-		if err := k.c.Run(logsCommand); err != nil {
-			return "", errors.Wrap(err, "getting shell")
+		if err := k.c.CombinedOutputTo(logsCommand, out); err != nil {
+			return errors.Wrap(err, "getting cluster logs")
 		}
-	}
+	} else {
 
-	logs, err := k.c.CombinedOutput(logsCommand)
-	if err != nil {
-		return "", errors.Wrap(err, "getting cluster logs")
+		logs, err := k.c.CombinedOutput(logsCommand)
+		if err != nil {
+			return errors.Wrap(err, "getting cluster logs")
+		}
+		fmt.Fprint(out, logs)
 	}
-
-	return logs, nil
+	return nil
 }
 
-func (k *KubeadmBootstrapper) StartCluster(k8s bootstrapper.KubernetesConfig) error {
-	// We use --skip-preflight-checks since we have our own custom addons
+func (k *KubeadmBootstrapper) StartCluster(k8s config.KubernetesConfig) error {
+	// We use --ignore-preflight-errors=DirAvailable since we have our own custom addons
 	// that we also stick in /etc/kubernetes/manifests
+	// We use --ignore-preflight-errors=Swap since minikube.iso allocates a swap partition.
+	// (it should probably stop doing this, though...)
+	// We use --ignore-preflight-errors=CRI since /var/run/dockershim.sock is not present.
+	// (because we start kubelet with an invalid config)
 	b := bytes.Buffer{}
-	if err := kubeadmInitTemplate.Execute(&b, struct{ KubeadmConfigFile, Token string }{constants.KubeadmConfigFile, k8s.BootstrapToken}); err != nil {
+	templateContext := struct {
+		KubeadmConfigFile string
+		Token             string
+		Preflights        []string
+	}{
+		KubeadmConfigFile: constants.KubeadmConfigFile,
+		Token:             k8s.BootstrapToken,
+		Preflights:        constants.Preflights,
+	}
+	if err := kubeadmInitTemplate.Execute(&b, templateContext); err != nil {
 		return err
 	}
 
-	err := k.c.Run(b.String())
+	out, err := k.c.CombinedOutput(b.String())
 	if err != nil {
-		return errors.Wrapf(err, "kubeadm init error running command: %s", b.String())
+		return errors.Wrapf(err, "kubeadm init error %s running command: %s", b.String(), out)
 	}
 
 	//TODO(r2d4): get rid of global here
 	master = k8s.NodeName
-	if err := util.RetryAfter(100, unmarkMaster, time.Millisecond*500); err != nil {
+	if err := util.RetryAfter(200, unmarkMaster, time.Second*1); err != nil {
 		return errors.Wrap(err, "timed out waiting to unmark master")
 	}
 
@@ -151,7 +166,7 @@ func (k *KubeadmBootstrapper) StartCluster(k8s bootstrapper.KubernetesConfig) er
 	return nil
 }
 
-func (k *KubeadmBootstrapper) JoinNode(k8s bootstrapper.KubernetesConfig) error {
+func (k *KubeadmBootstrapper) JoinNode(k8s config.KubernetesConfig) error {
 	// We use --skip-preflight-checks since we have our own custom addons
 	// that we also stick in /etc/kubernetes/manifests
 	b := bytes.Buffer{}
@@ -202,7 +217,7 @@ func addAddons(files *[]assets.CopyableFile) error {
 	return nil
 }
 
-func (k *KubeadmBootstrapper) RestartCluster(k8s bootstrapper.KubernetesConfig) error {
+func (k *KubeadmBootstrapper) RestartCluster(k8s config.KubernetesConfig) error {
 	opts := struct {
 		KubeadmConfigFile string
 	}{
@@ -225,7 +240,7 @@ func (k *KubeadmBootstrapper) RestartCluster(k8s bootstrapper.KubernetesConfig) 
 	return nil
 }
 
-func (k *KubeadmBootstrapper) SetupCerts(k8s bootstrapper.KubernetesConfig) error {
+func (k *KubeadmBootstrapper) SetupCerts(k8s config.KubernetesConfig) error {
 	return bootstrapper.SetupCerts(k.c, k8s)
 }
 
@@ -258,7 +273,7 @@ func SetContainerRuntime(cfg map[string]string, runtime string) map[string]strin
 
 // NewKubeletConfig generates a new systemd unit containing a configured kubelet
 // based on the options present in the KubernetesConfig.
-func NewKubeletConfig(hostname, ip string, k8s bootstrapper.KubernetesConfig) (string, error) {
+func NewKubeletConfig(hostname, ip string, k8s config.KubernetesConfig) (string, error) {
 	version, err := ParseKubernetesVersion(k8s.KubernetesVersion)
 	if err != nil {
 		return "", errors.Wrap(err, "parsing kubernetes version")
@@ -292,7 +307,7 @@ func NewKubeletConfig(hostname, ip string, k8s bootstrapper.KubernetesConfig) (s
 	return b.String(), nil
 }
 
-func (k *KubeadmBootstrapper) UpdateCluster(cfg bootstrapper.KubernetesConfig) error {
+func (k *KubeadmBootstrapper) UpdateCluster(cfg config.KubernetesConfig) error {
 	if cfg.ShouldLoadCachedImages {
 		// Make best effort to load any cached images
 		glog.Infoln("Loading cached images....")
@@ -361,7 +376,7 @@ sudo systemctl start kubelet
 	return nil
 }
 
-func (k *KubeadmBootstrapper) UpdateNode(cfg bootstrapper.KubernetesConfig) error {
+func (k *KubeadmBootstrapper) UpdateNode(cfg config.KubernetesConfig) error {
 	kubeletCfg, err := NewKubeletConfig(k.machineName, k.ip, cfg)
 	if err != nil {
 		return errors.Wrap(err, "generating kubelet config")
@@ -403,7 +418,7 @@ func (k *KubeadmBootstrapper) UpdateNode(cfg bootstrapper.KubernetesConfig) erro
 	return nil
 }
 
-func generateConfig(k8s bootstrapper.KubernetesConfig) (string, error) {
+func generateConfig(k8s config.KubernetesConfig) (string, error) {
 	version, err := ParseKubernetesVersion(k8s.KubernetesVersion)
 	if err != nil {
 		return "", errors.Wrap(err, "parsing kubernetes version")

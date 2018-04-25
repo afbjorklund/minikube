@@ -19,22 +19,22 @@ package kubeadm
 import (
 	"testing"
 
-	"k8s.io/minikube/pkg/minikube/bootstrapper"
+	"k8s.io/minikube/pkg/minikube/config"
 	"k8s.io/minikube/pkg/util"
 )
 
 func TestGenerateConfig(t *testing.T) {
 	tests := []struct {
 		description string
-		cfg         bootstrapper.KubernetesConfig
+		cfg         config.KubernetesConfig
 		expectedCfg string
 		shouldErr   bool
 	}{
 		{
 			description: "no extra args",
-			cfg: bootstrapper.KubernetesConfig{
+			cfg: config.KubernetesConfig{
 				NodeIP:            "192.168.1.100",
-				KubernetesVersion: "v1.8.0",
+				KubernetesVersion: "v1.10.0",
 				NodeName:          "minikube",
 			},
 			expectedCfg: `apiVersion: kubeadm.k8s.io/v1alpha1
@@ -42,7 +42,7 @@ kind: MasterConfiguration
 api:
   advertiseAddress: 192.168.1.100
   bindPort: 8443
-kubernetesVersion: v1.8.0
+kubernetesVersion: v1.10.0
 certificatesDir: /var/lib/localkube/certs/
 networking:
   serviceSubnet: 10.96.0.0/12
@@ -50,13 +50,15 @@ networking:
 etcd:
   dataDir: /data
 nodeName: minikube
+apiServerExtraArgs:
+  admission-control: "Initializers,NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota"
 `,
 		},
 		{
 			description: "extra args all components",
-			cfg: bootstrapper.KubernetesConfig{
+			cfg: config.KubernetesConfig{
 				NodeIP:            "192.168.1.101",
-				KubernetesVersion: "v1.8.0-alpha.0",
+				KubernetesVersion: "v1.10.0-alpha.0",
 				NodeName:          "extra-args-minikube",
 				ExtraOptions: util.ExtraOptionSlice{
 					util.ExtraOption{
@@ -81,7 +83,7 @@ kind: MasterConfiguration
 api:
   advertiseAddress: 192.168.1.101
   bindPort: 8443
-kubernetesVersion: v1.8.0-alpha.0
+kubernetesVersion: v1.10.0-alpha.0
 certificatesDir: /var/lib/localkube/certs/
 networking:
   serviceSubnet: 10.96.0.0/12
@@ -90,6 +92,7 @@ etcd:
   dataDir: /data
 nodeName: extra-args-minikube
 apiServerExtraArgs:
+  admission-control: "Initializers,NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota"
   fail-no-swap: "true"
 controllerManagerExtraArgs:
   kube-api-burst: "32"
@@ -99,9 +102,9 @@ schedulerExtraArgs:
 		},
 		{
 			description: "two extra args for one component",
-			cfg: bootstrapper.KubernetesConfig{
+			cfg: config.KubernetesConfig{
 				NodeIP:            "192.168.1.101",
-				KubernetesVersion: "v1.8.0-alpha.0",
+				KubernetesVersion: "v1.10.0-alpha.0",
 				NodeName:          "extra-args-minikube",
 				ExtraOptions: util.ExtraOptionSlice{
 					util.ExtraOption{
@@ -121,7 +124,7 @@ kind: MasterConfiguration
 api:
   advertiseAddress: 192.168.1.101
   bindPort: 8443
-kubernetesVersion: v1.8.0-alpha.0
+kubernetesVersion: v1.10.0-alpha.0
 certificatesDir: /var/lib/localkube/certs/
 networking:
   serviceSubnet: 10.96.0.0/12
@@ -130,15 +133,16 @@ etcd:
   dataDir: /data
 nodeName: extra-args-minikube
 apiServerExtraArgs:
+  admission-control: "Initializers,NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota"
   fail-no-swap: "true"
   kube-api-burst: "32"
 `,
 		},
 		{
 			description: "enable feature gates",
-			cfg: bootstrapper.KubernetesConfig{
+			cfg: config.KubernetesConfig{
 				NodeIP:            "192.168.1.101",
-				KubernetesVersion: "v1.8.0-alpha.0",
+				KubernetesVersion: "v1.10.0-alpha.0",
 				NodeName:          "extra-args-minikube",
 				FeatureGates:      "HugePages=true,OtherFeature=false",
 			},
@@ -147,7 +151,7 @@ kind: MasterConfiguration
 api:
   advertiseAddress: 192.168.1.101
   bindPort: 8443
-kubernetesVersion: v1.8.0-alpha.0
+kubernetesVersion: v1.10.0-alpha.0
 certificatesDir: /var/lib/localkube/certs/
 networking:
   serviceSubnet: 10.96.0.0/12
@@ -156,6 +160,7 @@ etcd:
   dataDir: /data
 nodeName: extra-args-minikube
 apiServerExtraArgs:
+  admission-control: "Initializers,NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota"
   feature-gates: "HugePages=true,OtherFeature=false"
 controllerManagerExtraArgs:
   feature-gates: "HugePages=true,OtherFeature=false"
@@ -165,9 +170,9 @@ schedulerExtraArgs:
 		},
 		{
 			description: "enable feature gates and extra config",
-			cfg: bootstrapper.KubernetesConfig{
+			cfg: config.KubernetesConfig{
 				NodeIP:            "192.168.1.101",
-				KubernetesVersion: "v1.8.0-alpha.0",
+				KubernetesVersion: "v1.10.0-alpha.0",
 				NodeName:          "extra-args-minikube",
 				FeatureGates:      "HugePages=true,OtherFeature=false",
 				ExtraOptions: util.ExtraOptionSlice{
@@ -183,7 +188,7 @@ kind: MasterConfiguration
 api:
   advertiseAddress: 192.168.1.101
   bindPort: 8443
-kubernetesVersion: v1.8.0-alpha.0
+kubernetesVersion: v1.10.0-alpha.0
 certificatesDir: /var/lib/localkube/certs/
 networking:
   serviceSubnet: 10.96.0.0/12
@@ -192,6 +197,7 @@ etcd:
   dataDir: /data
 nodeName: extra-args-minikube
 apiServerExtraArgs:
+  admission-control: "Initializers,NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota"
   fail-no-swap: "true"
   feature-gates: "HugePages=true,OtherFeature=false"
 controllerManagerExtraArgs:
@@ -203,7 +209,7 @@ schedulerExtraArgs:
 		{
 			// Unknown components should fail silently
 			description: "unknown component",
-			cfg: bootstrapper.KubernetesConfig{
+			cfg: config.KubernetesConfig{
 				NodeIP:            "192.168.1.101",
 				KubernetesVersion: "v1.8.0-alpha.0",
 				NodeName:          "extra-args-minikube",

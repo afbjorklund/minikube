@@ -28,14 +28,15 @@ import (
 )
 
 const (
-	WantUpdateNotification            = "WantUpdateNotification"
-	ReminderWaitPeriodInHours         = "ReminderWaitPeriodInHours"
-	WantReportError                   = "WantReportError"
-	WantReportErrorPrompt             = "WantReportErrorPrompt"
-	WantKubectlDownloadMsg            = "WantKubectlDownloadMsg"
-	WantNoneDriverWarning             = "WantNoneDriverWarning"
-	MachineProfile                    = "profile"
-	ShowDriverDeprecationNotification = "ShowDriverDeprecationNotification"
+	WantUpdateNotification                  = "WantUpdateNotification"
+	ReminderWaitPeriodInHours               = "ReminderWaitPeriodInHours"
+	WantReportError                         = "WantReportError"
+	WantReportErrorPrompt                   = "WantReportErrorPrompt"
+	WantKubectlDownloadMsg                  = "WantKubectlDownloadMsg"
+	WantNoneDriverWarning                   = "WantNoneDriverWarning"
+	MachineProfile                          = "profile"
+	ShowDriverDeprecationNotification       = "ShowDriverDeprecationNotification"
+	ShowBootstrapperDeprecationNotification = "ShowBootstrapperDeprecationNotification"
 )
 
 type MinikubeConfig map[string]interface{}
@@ -64,6 +65,8 @@ func ReadConfig() (MinikubeConfig, error) {
 		}
 		return nil, fmt.Errorf("Could not open file %s: %s", constants.ConfigFile, err)
 	}
+	defer f.Close()
+
 	m, err := decode(f)
 	if err != nil {
 		return nil, fmt.Errorf("Could not decode config %s: %s", constants.ConfigFile, err)

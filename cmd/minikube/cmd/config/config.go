@@ -125,6 +125,10 @@ var settings = []Setting{
 		set:  SetString, //TODO(r2d4): more validation here?
 	},
 	{
+		name: config.ShowBootstrapperDeprecationNotification,
+		set:  SetBool,
+	},
+	{
 		name:        "dashboard",
 		set:         SetBool,
 		validations: []setFn{IsValidAddon},
@@ -195,6 +199,18 @@ var settings = []Setting{
 		set:         SetBool,
 		validations: []setFn{IsValidAddon},
 		callbacks:   []setFn{EnableOrDisableDefaultStorageClass},
+	},
+	{
+		name:        "storage-provisioner",
+		set:         SetBool,
+		validations: []setFn{IsValidAddon},
+		callbacks:   []setFn{EnableOrDisableAddon},
+	},
+	{
+		name:        "metrics-server",
+		set:         SetBool,
+		validations: []setFn{IsValidAddon},
+		callbacks:   []setFn{EnableOrDisableAddon},
 	},
 	{
 		name: "hyperv-virtual-switch",

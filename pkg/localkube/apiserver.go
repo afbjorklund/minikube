@@ -21,14 +21,16 @@ import (
 	"path"
 	"strconv"
 
+	"k8s.io/minikube/pkg/util"
+
 	"github.com/coreos/etcd/embed"
 
 	apiserveroptions "k8s.io/apiserver/pkg/server/options"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 
+	genericoptions "k8s.io/apiserver/pkg/server/options"
 	apiserver "k8s.io/kubernetes/cmd/kube-apiserver/app"
 	"k8s.io/kubernetes/cmd/kube-apiserver/app/options"
-	kubeapioptions "k8s.io/kubernetes/pkg/kubeapiserver/options"
 )
 
 func (lk LocalkubeServer) NewAPIServer() Server {
@@ -48,13 +50,7 @@ func StartAPIServer(lk LocalkubeServer) func() error {
 
 	config.SecureServing.ServerCert.CertKey.CertFile = lk.GetPublicKeyCertPath()
 	config.SecureServing.ServerCert.CertKey.KeyFile = lk.GetPrivateKeyCertPath()
-	config.Admission.PluginNames = []string{
-		"NamespaceLifecycle",
-		"LimitRanger",
-		"ServiceAccount",
-		"DefaultStorageClass",
-		"ResourceQuota",
-	}
+	config.Admission.PluginNames = util.DefaultAdmissionControllers
 	// use localkube etcd
 
 	config.Etcd.StorageConfig.ServerList = []string{embed.DefaultListenClientURLs}
@@ -73,7 +69,7 @@ func StartAPIServer(lk LocalkubeServer) func() error {
 
 	config.AllowPrivileged = true
 
-	config.APIEnablement = &kubeapioptions.APIEnablementOptions{
+	config.APIEnablement = &genericoptions.APIEnablementOptions{
 		RuntimeConfig: lk.RuntimeConfig,
 	}
 

@@ -6,15 +6,15 @@ import (
 
 	"github.com/pkg/errors"
 	"k8s.io/minikube/pkg/minikube"
-	"k8s.io/minikube/pkg/minikube/bootstrapper"
+	cfg "k8s.io/minikube/pkg/minikube/config"
 )
 
 type WorkerBootstrapper struct {
-	config bootstrapper.KubernetesConfig
+	config cfg.KubernetesConfig
 	ui     io.Writer
 }
 
-func NewWorkerBootstrapper(c bootstrapper.KubernetesConfig, ui io.Writer) minikube.Bootstrapper {
+func NewWorkerBootstrapper(c cfg.KubernetesConfig, ui io.Writer) minikube.Bootstrapper {
 	return &WorkerBootstrapper{config: c, ui: ui}
 }
 

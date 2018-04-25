@@ -9,14 +9,15 @@ import (
 	"k8s.io/minikube/pkg/minikube"
 	"k8s.io/minikube/pkg/minikube/bootstrapper/runner"
 	"k8s.io/minikube/pkg/minikube/cluster"
+	cfg "k8s.io/minikube/pkg/minikube/config"
 	"k8s.io/minikube/pkg/minikube/constants"
 	"k8s.io/minikube/pkg/minikube/sshutil"
 	"k8s.io/minikube/pkg/util"
 )
 
 func NewNode(
-	config minikube.NodeConfig,
-	baseConfig cluster.MachineConfig,
+	config cfg.NodeConfig,
+	baseConfig cfg.MachineConfig,
 	clusterName string,
 	api libmachine.API,
 ) minikube.Node {
@@ -30,13 +31,15 @@ func NewNode(
 
 type node struct {
 	api         libmachine.API
-	config      minikube.NodeConfig
-	baseConfig  cluster.MachineConfig
+	config      cfg.NodeConfig
+	baseConfig  cfg.MachineConfig
 	clusterName string
 }
 
 func (n *node) Config() minikube.NodeConfig {
-	return n.config
+	var c minikube.NodeConfig
+	c.Name = n.config.Name
+	return c
 }
 
 func (n *node) IP() (string, error) {
@@ -91,7 +94,7 @@ func (n *node) Runner() (runner.CommandRunner, error) {
 	return runner.NewSSHRunner(client), nil
 }
 
-func (n *node) machineConfig() cluster.MachineConfig {
+func (n *node) machineConfig() cfg.MachineConfig {
 	cfg := n.baseConfig
 	cfg.Downloader = util.DefaultDownloader{}
 	cfg.MachineName = n.MachineName()

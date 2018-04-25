@@ -128,7 +128,7 @@ func runStart(cmd *cobra.Command, args []string) {
 	}
 
 	// NOTE Create machine config
-	config := cluster.MachineConfig{
+	config := cfg.MachineConfig{
 		MachineName:         cfg.GetMachineName(),
 		MinikubeISO:         viper.GetString(isoURL),
 		Memory:              viper.GetInt(memory),
@@ -213,7 +213,7 @@ func runStart(cmd *cobra.Command, args []string) {
 		glog.Exitf("Error generating bootstrap token: ", err)
 	}
 
-	kubernetesConfig := bootstrapper.KubernetesConfig{
+	kubernetesConfig := cfg.KubernetesConfig{
 		KubernetesVersion:      selectedKubernetesVersion,
 		NodeIP:                 ip,
 		NodeName:               cfg.GetMachineName(),
@@ -237,7 +237,7 @@ func runStart(cmd *cobra.Command, args []string) {
 	}
 
 	// Write profile cluster configuration to file
-	clusterConfig := cluster.Config{
+	clusterConfig := cfg.Config{
 		ClusterName:      profileName,
 		MachineConfig:    config,
 		KubernetesConfig: kubernetesConfig,
@@ -427,7 +427,6 @@ func genBootstrapToken() (string, error) {
 	if err != nil {
 		return "", nil
 	}
-
 	second, err := gostrgen.RandGen(16, gostrgen.Lower|gostrgen.Digit, "", "")
 	if err != nil {
 		return "", nil

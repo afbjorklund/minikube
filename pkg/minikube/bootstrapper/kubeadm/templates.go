@@ -73,7 +73,8 @@ sudo /usr/bin/kubeadm alpha phase controlplane all --config {{.KubeadmConfigFile
 sudo /usr/bin/kubeadm alpha phase etcd local --config {{.KubeadmConfigFile}}
 `))
 
-var kubeadmInitTemplate = template.Must(template.New("kubeadmInitTemplate").Parse("sudo /usr/bin/kubeadm init --config {{.KubeadmConfigFile}} --skip-preflight-checks"))
+var kubeadmInitTemplate = template.Must(template.New("kubeadmInitTemplate").Parse(
+	"sudo /usr/bin/kubeadm init --config {{.KubeadmConfigFile}} {{range .Preflights}}--ignore-preflight-errors={{.}} {{end}}"))
 
 var kubeadmJoinTemplate = template.Must(template.New("kubeadmJoinTemplate").Parse("sudo /usr/bin/kubeadm join --token {{.Token}} {{.ServerAddress}}"))
 

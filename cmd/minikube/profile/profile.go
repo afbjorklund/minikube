@@ -9,7 +9,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
-	"k8s.io/minikube/pkg/minikube/cluster"
 	cfg "k8s.io/minikube/pkg/minikube/config"
 	"k8s.io/minikube/pkg/minikube/constants"
 	pkgutil "k8s.io/minikube/pkg/util"
@@ -17,7 +16,7 @@ import (
 
 // SaveConfig saves profile cluster configuration in
 // $MINIKUBE_HOME/profiles/<profilename>/config.json
-func SaveConfig(profile string, clusterConfig cluster.Config) error {
+func SaveConfig(profile string, clusterConfig cfg.Config) error {
 	data, err := json.MarshalIndent(clusterConfig, "", "    ")
 	if err != nil {
 		return err
@@ -65,8 +64,8 @@ func saveConfigToFile(data []byte, file string) error {
 	return nil
 }
 
-func LoadConfigFromFile(profile string) (cluster.Config, error) {
-	var cc cluster.Config
+func LoadConfigFromFile(profile string) (cfg.Config, error) {
+	var cc cfg.Config
 
 	if profile == "" {
 		return cc, fmt.Errorf("Profile name cannot be empty.")
@@ -92,14 +91,14 @@ func LoadConfigFromFile(profile string) (cluster.Config, error) {
 	return cc, nil
 }
 
-func LoadClusterConfigs() ([]cluster.Config, error) {
+func LoadClusterConfigs() ([]cfg.Config, error) {
 	files := constants.GetProfileFiles()
 
-	configs := make([]cluster.Config, len(files))
+	configs := make([]cfg.Config, len(files))
 	for i, f := range files {
 		c, err := loadConfigFromFile(f)
 		if err != nil {
-			return []cluster.Config{}, errors.Wrapf(err, "Error loading config from file: %s", f)
+			return []cfg.Config{}, errors.Wrapf(err, "Error loading config from file: %s", f)
 		}
 		configs[i] = c
 	}
@@ -107,8 +106,8 @@ func LoadClusterConfigs() ([]cluster.Config, error) {
 	return configs, nil
 }
 
-func loadConfigFromFile(file string) (cluster.Config, error) {
-	var c cluster.Config
+func loadConfigFromFile(file string) (cfg.Config, error) {
+	var c cfg.Config
 
 	reader, err := os.Open(file)
 	defer reader.Close()

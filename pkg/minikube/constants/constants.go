@@ -46,6 +46,16 @@ func GetMinipath() string {
 	return filepath.Join(os.Getenv(MinikubeHome), ".minikube")
 }
 
+// SupportedVMDrivers is a list of supported drivers on all platforms. Currently
+// used in gendocs.
+var SupportedVMDrivers = [...]string{
+	"virtualbox",
+	"vmwarefusion",
+	"kvm",
+	"xhyve",
+	"hyperv",
+}
+
 var DefaultMinipath = filepath.Join(homedir.HomeDir(), ".minikube")
 
 // KubeconfigPath is the path to the Kubernetes client config
@@ -101,7 +111,7 @@ const (
 	KubernetesVersionGCSURL    = "https://storage.googleapis.com/minikube/k8s_releases.json"
 	DefaultWait                = 20
 	DefaultInterval            = 6
-	DefaultClusterBootstrapper = "localkube"
+	DefaultClusterBootstrapper = "kubeadm"
 )
 
 var DefaultIsoUrl = fmt.Sprintf("https://storage.googleapis.com/%s/minikube-%s.iso", minikubeVersion.GetIsoPath(), minikubeVersion.GetIsoVersion())
@@ -145,6 +155,16 @@ const (
 	KubeadmConfigFile      = "/var/lib/kubeadm.yaml"
 )
 
+var Preflights = []string{
+	"DirAvailable--etc-kubernetes-manifests",
+	"DirAvailable--data",
+	"FileAvailable--etc-kubernetes-manifests-kube-scheduler.yaml",
+	"FileAvailable--etc-kubernetes-manifests-kube-apiserver.yaml",
+	"FileAvailable--etc-kubernetes-manifests-kube-controller-manager.yaml",
+	"FileAvailable--etc-kubernetes-manifests-etcd.yaml",
+	"Swap",
+}
+
 const (
 	LocalkubeServicePath = "/etc/systemd/system/localkube.service"
 	LocalkubeRunning     = "active"
@@ -181,7 +201,7 @@ var LocalkubeCachedImages = []string{
 	"k8s.gcr.io/k8s-dns-sidecar-amd64:1.14.5",
 
 	// Addon Manager
-	"gcr.io/google-containers/kube-addon-manager:v6.5",
+	"k8s.gcr.io/kube-addon-manager:v6.5",
 
 	// Pause
 	"k8s.gcr.io/pause-amd64:3.0",
@@ -196,7 +216,7 @@ func GetKubeadmCachedImages(version string) []string {
 		"k8s.gcr.io/kubernetes-dashboard-amd64:v1.8.1",
 
 		// Addon Manager
-		"gcr.io/google-containers/kube-addon-manager:v6.5",
+		"k8s.gcr.io/kube-addon-manager:v6.5",
 
 		// Pause
 		"k8s.gcr.io/pause-amd64:3.0",

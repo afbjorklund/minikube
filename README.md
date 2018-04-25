@@ -10,7 +10,7 @@
 [GoReport Status]: https://goreportcard.com/report/github.com/kubernetes/minikube
 [GoReport Widget]: https://goreportcard.com/badge/github.com/kubernetes/minikube
 
-[CodeCovResult]: https://codecov.io/gh/kubernetes/minikube 
+[CodeCovResult]: https://codecov.io/gh/kubernetes/minikube
 [CodeCovWidget]: https://codecov.io/gh/kubernetes/minikube/branch/master/graph/badge.svg
 
 <img src="https://github.com/kubernetes/minikube/raw/master/logo/logo.png" width="100">
@@ -33,7 +33,7 @@ curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/miniku
 ### Windows
 Download the [minikube-windows-amd64.exe](https://storage.googleapis.com/minikube/releases/latest/minikube-windows-amd64.exe) file, rename it to `minikube.exe` and add it to your path.
 
-### Linux Continuous Integration with VM Support
+### Linux Continuous Integration without VM Support
 Example with kubectl installation:
 ```shell
 curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 && chmod +x minikube
@@ -63,7 +63,9 @@ done
 
 ### Other Ways to Install
 
-* [Linux] [Arch Linux AUR](https://aur.archlinux.org/packages/minikube/)
+* [Linux]
+    * [Arch Linux AUR](https://aur.archlinux.org/packages/minikube/)
+    * [Fedora/CentOS/Red Hat COPR](https://copr.fedorainfracloud.org/coprs/antonpatsev/minikube-rpm/)
 * [Windows] [Chocolatey](https://chocolatey.org/packages/Minikube)
 
 ### Minikube Version Management
@@ -78,7 +80,7 @@ We also released a Debian package and Windows installer on our [releases page](h
     * [Hyperkit driver](https://github.com/kubernetes/minikube/blob/master/docs/drivers.md#hyperkit-driver), [xhyve driver](https://github.com/kubernetes/minikube/blob/master/docs/drivers.md#xhyve-driver), [VirtualBox](https://www.virtualbox.org/wiki/Downloads), or [VMware Fusion](https://www.vmware.com/products/fusion)
 * Linux
     * [VirtualBox](https://www.virtualbox.org/wiki/Downloads) or [KVM](https://github.com/kubernetes/minikube/blob/master/docs/drivers.md#kvm-driver)
-    * **NOTE:** Minikube also supports a `--vm-driver=none` option that runs the Kubernetes components on the host and not in a VM. Docker is required to use this driver but no hypervisor.
+    * **NOTE:** Minikube also supports a `--vm-driver=none` option that runs the Kubernetes components on the host and not in a VM. Docker is required to use this driver but no hypervisor. If you use `--vm-driver=none`, be sure to specify a [bridge network](https://docs.docker.com/network/bridge/#configure-the-default-bridge-network) for docker. Otherwise it might change between network restarts, causing loss of connectivity to your cluster.
 * Windows
     * [VirtualBox](https://www.virtualbox.org/wiki/Downloads) or [Hyper-V](https://github.com/kubernetes/minikube/blob/master/docs/drivers.md#hyperV-driver)
 * VT-x/AMD-v virtualization must be enabled in BIOS
@@ -145,7 +147,7 @@ Machine stopped.
 
 ### kubectl
 
-The `minikube start` command creates a "[kubectl context](https://kubernetes.io/docs/user-guide/kubectl/v1.7/#-em-set-context-em-)" called "minikube".
+The `minikube start` command creates a "[kubectl context](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#-em-set-context-em-)" called "minikube".
 This context contains the configuration to communicate with your Minikube cluster.
 
 Minikube sets this context to default automatically, but if you need to switch back to it in the future, run:
@@ -170,7 +172,7 @@ minikube service [-n NAMESPACE] [--url] NAME
 
 ## Design
 
-Minikube uses [libmachine](https://github.com/docker/machine/tree/master/libmachine) for provisioning VMs, and [localkube](https://github.com/kubernetes/minikube/tree/master/pkg/localkube) (originally written and donated to this project by [Redspread](https://redspread.com/)) for running the cluster.
+Minikube uses [libmachine](https://github.com/docker/machine/tree/master/libmachine) for provisioning VMs, and [localkube](https://github.com/kubernetes/minikube/tree/master/pkg/localkube) (originally written and donated to this project by Redspread) for running the cluster.
 
 For more information about Minikube, see the [proposal](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/cluster-lifecycle/local-cluster-ux.md).
 

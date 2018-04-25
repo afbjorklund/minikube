@@ -14,13 +14,15 @@
 
 apiVersion: v1
 data:
+  # see https://github.com/kubernetes/ingress-nginx/blob/master/docs/user-guide/configmap.md for all possible options and their description
   map-hash-bucket-size: "128"
+  hsts: "false"
 kind: ConfigMap
 metadata:
   name: nginx-load-balancer-conf
   namespace: kube-system
   labels:
-    addonmanager.kubernetes.io/mode: Reconcile
+    addonmanager.kubernetes.io/mode: EnsureExists
 ---
 apiVersion: v1
 kind: ConfigMap

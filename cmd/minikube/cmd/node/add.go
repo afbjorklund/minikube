@@ -10,8 +10,7 @@ import (
 
 	"k8s.io/minikube/cmd/minikube/profile"
 	cmdutil "k8s.io/minikube/cmd/util"
-	"k8s.io/minikube/pkg/minikube"
-	cfg "k8s.io/minikube/pkg/minikube/config"
+	"k8s.io/minikube/pkg/minikube/config"
 )
 
 func NewCmdAdd() *cobra.Command {
@@ -25,7 +24,7 @@ func NewCmdAdd() *cobra.Command {
 
 func add(cmd *cobra.Command, args []string) {
 	// TODO Make clusterName into `--cluster=` flag
-	clusterName := viper.GetString(cfg.MachineProfile)
+	clusterName := viper.GetString(config.MachineProfile)
 
 	nodeName := ""
 	if len(args) > 0 {
@@ -42,7 +41,7 @@ func add(cmd *cobra.Command, args []string) {
 		nodeName = fmt.Sprintf("node-%d", len(cfg.Nodes)+1)
 	}
 
-	node := minikube.NodeConfig{
+	node := config.NodeConfig{
 		Name: nodeName,
 	}
 

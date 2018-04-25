@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"k8s.io/minikube/cmd/minikube/profile"
-	"k8s.io/minikube/pkg/minikube"
+	"k8s.io/minikube/pkg/minikube/config"
 )
 
 const internalErrorCode = -1
@@ -30,14 +30,14 @@ func NewCmdNode() *cobra.Command {
 	return cmd
 }
 
-func getMachineName(clusterName string, node minikube.NodeConfig) string {
+func getMachineName(clusterName string, node config.NodeConfig) string {
 	return fmt.Sprintf("%s-%s", clusterName, node.Name)
 }
 
-func getNode(clusterName, nodeName string) (minikube.NodeConfig, error) {
+func getNode(clusterName, nodeName string) (config.NodeConfig, error) {
 	cfg, err := profile.LoadConfigFromFile(clusterName)
 	if err != nil && !os.IsNotExist(err) {
-		return minikube.NodeConfig{}, errors.Errorf("Error loading profile config: %s", err)
+		return config.NodeConfig{}, errors.Errorf("Error loading profile config: %s", err)
 	}
 
 	for _, node := range cfg.Nodes {
@@ -46,5 +46,5 @@ func getNode(clusterName, nodeName string) (minikube.NodeConfig, error) {
 		}
 	}
 
-	return minikube.NodeConfig{}, errors.Errorf("Node not found in cluster. cluster: %s node: %s", clusterName, nodeName)
+	return config.NodeConfig{}, errors.Errorf("Node not found in cluster. cluster: %s node: %s", clusterName, nodeName)
 }
