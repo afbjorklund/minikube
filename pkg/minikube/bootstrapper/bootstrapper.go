@@ -17,6 +17,8 @@ limitations under the License.
 package bootstrapper
 
 import (
+	"net"
+
 	"k8s.io/minikube/pkg/minikube/constants"
 	"k8s.io/minikube/pkg/util"
 )
@@ -37,6 +39,8 @@ type KubernetesConfig struct {
 	NodeIP            string
 	NodeName          string
 	APIServerName     string
+	APIServerNames    []string
+	APIServerIPs      []net.IP
 	DNSDomain         string
 	ContainerRuntime  string
 	NetworkPlugin     string
