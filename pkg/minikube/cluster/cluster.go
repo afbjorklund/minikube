@@ -395,7 +395,7 @@ func CreateSSHShellByName(name string, api libmachine.API, args []string) error 
 }
 
 // EnsureMinikubeRunningOrExit checks that minikube has a status available and that
-// that the status is `Running`, otherwise it will exit
+// the status is `Running`, otherwise it will exit
 func EnsureMinikubeRunningOrExit(api libmachine.API, exitStatus int) {
 	s, err := GetHostStatus(cfg.GetMachineName(), api)
 	if err != nil {

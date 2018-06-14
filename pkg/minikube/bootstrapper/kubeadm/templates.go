@@ -43,12 +43,14 @@ nodeName: {{.NodeName}}
 {{end}}{{if .Token}}token: {{.Token}}{{end}}`))
 
 var kubeletSystemdTemplate = template.Must(template.New("kubeletSystemdTemplate").Parse(`
+[Unit]
+{{if or (eq .ContainerRuntime "cri-o") (eq .ContainerRuntime "cri")}}Wants=crio.service{{else}}Wants=docker.socket{{end}}
+
 [Service]
 ExecStart=
 ExecStart=/usr/bin/kubelet --node-ip={{.NodeIP}} --hostname-override={{.Hostname}} {{.ExtraOptions}} {{if .FeatureGates}}--feature-gates={{.FeatureGates}}{{end}}
 
 [Install]
-{{if or (eq .ContainerRuntime "cri-o") (eq .ContainerRuntime "cri")}}Wants=crio.service{{else}}Wants=docker.socket{{end}}
 `))
 
 const kubeletService = `
@@ -74,7 +76,7 @@ sudo /usr/bin/kubeadm alpha phase etcd local --config {{.KubeadmConfigFile}}
 `))
 
 var kubeadmInitTemplate = template.Must(template.New("kubeadmInitTemplate").Parse(
-	"sudo /usr/bin/kubeadm init --config {{.KubeadmConfigFile}} {{range .Preflights}}--ignore-preflight-errors={{.}} {{end}}"))
+	"sudo /usr/bin/kubeadm init --config {{.KubeadmConfigFile}} {{if .SkipPreflightChecks}}--skip-preflight-checks{{else}}{{range .Preflights}}--ignore-preflight-errors={{.}} {{end}}{{end}}"))
 
 var kubeadmJoinTemplate = template.Must(template.New("kubeadmJoinTemplate").Parse("sudo /usr/bin/kubeadm join --token {{.Token}} {{.ServerAddress}}"))
 
