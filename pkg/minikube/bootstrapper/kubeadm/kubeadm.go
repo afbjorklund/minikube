@@ -92,16 +92,19 @@ func NewKubeadmBootstrapperForRunner(machineName, ip string, c runner.CommandRun
 
 //TODO(r2d4): This should most likely check the health of the apiserver
 func (k *KubeadmBootstrapper) GetClusterStatus() (string, error) {
-	statusCmd := `sudo systemctl is-active kubelet &>/dev/null && echo "Running" || echo "Stopped"`
+	statusCmd := `sudo systemctl is-active kubelet`
 	status, err := k.c.CombinedOutput(statusCmd)
 	if err != nil {
 		return "", errors.Wrap(err, "getting status")
 	}
-	status = strings.TrimSpace(status)
-	if status == state.Running.String() || status == state.Stopped.String() {
-		return status, nil
+	s := strings.TrimSpace(status)
+	switch s {
+	case "active":
+		return state.Running.String(), nil
+	case "inactive":
+		return state.Stopped.String(), nil
 	}
-	return "", fmt.Errorf("Error: Unrecognized output from ClusterStatus: %s", status)
+	return state.Error.String(), nil
 }
 
 // TODO(r2d4): Should this aggregate all the logs from the control plane?
@@ -320,6 +323,7 @@ func (k *KubeadmBootstrapper) UpdateCluster(cfg config.KubernetesConfig) error {
 			glog.Infoln("Could not load all cached images, ignoring and continuing. Error: ", err)
 		}
 	}
+
 	kubeadmCfg, err := generateConfig(cfg)
 	if err != nil {
 		return errors.Wrap(err, "generating kubeadm cfg")
@@ -453,7 +457,7 @@ func generateConfig(k8s config.KubernetesConfig) (string, error) {
 		AdvertiseAddress:  k8s.NodeIP,
 		APIServerPort:     util.APIServerPort,
 		KubernetesVersion: k8s.KubernetesVersion,
-		EtcdDataDir:       "/data", //TODO(r2d4): change to something else persisted
+		EtcdDataDir:       "/data/minikube", //TODO(r2d4): change to something else persisted
 		NodeName:          k8s.NodeName,
 		ExtraArgs:         extraComponentConfig,
 		Token:             k8s.BootstrapToken,

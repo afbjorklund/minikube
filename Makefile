@@ -14,22 +14,22 @@
 
 # Bump these on release
 VERSION_MAJOR ?= 0
-VERSION_MINOR ?= 27
+VERSION_MINOR ?= 28
 VERSION_BUILD ?= 0
 VERSION ?= v$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_BUILD)
 DEB_VERSION ?= $(VERSION_MAJOR).$(VERSION_MINOR)-$(VERSION_BUILD)
 INSTALL_SIZE ?= $(shell du out/minikube-windows-amd64.exe | cut -f1)
-BUILDROOT_BRANCH ?= 2017.11
+BUILDROOT_BRANCH ?= 2018.05
 REGISTRY?=gcr.io/k8s-minikube
 
 HYPERKIT_BUILD_IMAGE 	?= karalabe/xgo-1.8.3
 BUILD_IMAGE 	?= k8s.gcr.io/kube-cross:v1.9.1-1
 ISO_BUILD_IMAGE ?= $(REGISTRY)/buildroot-image
 
-ISO_VERSION ?= v0.26.0
+ISO_VERSION ?= v0.28.0
 ISO_BUCKET ?= minikube/iso
 
-KERNEL_VERSION ?= 4.9.64
+KERNEL_VERSION ?= 4.16.14
 
 GOOS ?= $(shell go env GOOS)
 GOARCH ?= $(shell go env GOARCH)
@@ -98,7 +98,7 @@ out/minikube$(IS_EXE): out/minikube-$(GOOS)-$(GOARCH)$(IS_EXE)
 	cp $< $@
 
 out/localkube.d:
-	GOOS=linux GOARCH=amd64 $(MAKEDEPEND) out/localkube $(ORG) $(LOCALKUBEFILES) $^ > $@
+	GOOS=linux GOARCH=$(GOARCH) $(MAKEDEPEND) out/localkube $(ORG) $(LOCALKUBEFILES) $^ > $@
 
 -include out/localkube.d
 out/localkube:
@@ -115,14 +115,14 @@ out/minikube.d: pkg/minikube/assets/assets.go
 	$(MAKEDEPEND) out/minikube-$(GOOS)-$(GOARCH) $(ORG) $(MINIKUBEFILES) $^ > $@
 
 -include out/minikube.d
-out/minikube-%-amd64: pkg/minikube/assets/assets.go
+out/minikube-%-$(GOARCH): pkg/minikube/assets/assets.go
 ifeq ($(MINIKUBE_BUILD_IN_DOCKER),y)
 	$(call DOCKER,$(BUILD_IMAGE),/usr/bin/make $@)
 else
 ifneq ($(GOPATH)/src/$(REPOPATH),$(PWD))
 	$(warning Warning: Building minikube outside the GOPATH, should be $(GOPATH)/src/$(REPOPATH) but is $(PWD))
 endif
-	GOOS=$* go build -tags "$(MINIKUBE_BUILD_TAGS)" -ldflags="$(MINIKUBE_LDFLAGS) $(K8S_VERSION_LDFLAGS)" -a -o $@ k8s.io/minikube/cmd/minikube
+	GOOS=$* GOARCH=$(GOARCH) go build -tags "$(MINIKUBE_BUILD_TAGS)" -ldflags="$(MINIKUBE_LDFLAGS) $(K8S_VERSION_LDFLAGS)" -a -o $@ k8s.io/minikube/cmd/minikube
 endif
 
 .PHONY: e2e-%-amd64
@@ -142,12 +142,18 @@ minikube_iso: # old target kept for making tests happy
 	$(MAKE) -C $(BUILD_DIR)/buildroot
 	mv $(BUILD_DIR)/buildroot/output/images/rootfs.iso9660 $(BUILD_DIR)/minikube.iso
 
+# Change buildroot configuration for the minikube ISO
+.PHONY: iso-menuconfig
+iso-menuconfig:
+	$(MAKE) -C $(BUILD_DIR)/buildroot menuconfig
+	$(MAKE) -C $(BUILD_DIR)/buildroot savedefconfig
+
 # Change the kernel configuration for the minikube ISO
 .PHONY: linux-menuconfig
 linux-menuconfig:
-	$(MAKE) -C $(BUILD_DIR)/buildroot linux-menuconfig
-	$(MAKE) -C $(BUILD_DIR)/buildroot linux-savedefconfig
-	cp $(BUILD_DIR)/buildroot/output/build/linux-$(KERNEL_VERSION)/defconfig deploy/iso/minikube-iso/board/coreos/minikube/linux-4.9_defconfig
+	$(MAKE) -C $(BUILD_DIR)/buildroot/output/build/linux-$(KERNEL_VERSION)/ menuconfig
+	$(MAKE) -C $(BUILD_DIR)/buildroot/output/build/linux-$(KERNEL_VERSION)/ savedefconfig
+	cp $(BUILD_DIR)/buildroot/output/build/linux-$(KERNEL_VERSION)/defconfig deploy/iso/minikube-iso/board/coreos/minikube/linux_defconfig
 
 out/minikube.iso: $(shell find deploy/iso/minikube-iso -type f)
 ifeq ($(IN_DOCKER),1)
@@ -200,11 +206,9 @@ out/test.d: pkg/minikube/assets/assets.go
 test:
 	./test.sh
 
-pkg/minikube/assets/assets.go: $(GOPATH)/bin/go-bindata $(shell find deploy/addons -type f)
-	$(GOPATH)/bin/go-bindata -nomemcopy -o pkg/minikube/assets/assets.go -pkg assets deploy/addons/...
-
-$(GOPATH)/bin/go-bindata:
-	GOBIN=$(GOPATH)/bin go get github.com/jteeuwen/go-bindata/...
+pkg/minikube/assets/assets.go: $(shell find deploy/addons -type f)
+	which go-bindata || GOBIN=$(GOPATH)/bin go get github.com/jteeuwen/go-bindata/...
+	PATH=$(PATH):$(GOPATH)/bin go-bindata -nomemcopy -o pkg/minikube/assets/assets.go -pkg assets deploy/addons/...
 
 .PHONY: cross
 cross: out/minikube-linux-amd64 out/minikube-darwin-amd64 out/minikube-windows-amd64.exe

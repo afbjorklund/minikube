@@ -48,7 +48,7 @@ networking:
   serviceSubnet: 10.96.0.0/12
   podSubnet: 10.244.0.0/16
 etcd:
-  dataDir: /data
+  dataDir: /data/minikube
 nodeName: minikube
 apiServerExtraArgs:
   admission-control: "Initializers,NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota"
@@ -89,7 +89,7 @@ networking:
   serviceSubnet: 10.96.0.0/12
   podSubnet: 10.244.0.0/16
 etcd:
-  dataDir: /data
+  dataDir: /data/minikube
 nodeName: extra-args-minikube
 apiServerExtraArgs:
   admission-control: "Initializers,NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota"
@@ -130,7 +130,7 @@ networking:
   serviceSubnet: 10.96.0.0/12
   podSubnet: 10.244.0.0/16
 etcd:
-  dataDir: /data
+  dataDir: /data/minikube
 nodeName: extra-args-minikube
 apiServerExtraArgs:
   admission-control: "Initializers,NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota"
@@ -157,7 +157,7 @@ networking:
   serviceSubnet: 10.96.0.0/12
   podSubnet: 10.244.0.0/16
 etcd:
-  dataDir: /data
+  dataDir: /data/minikube
 nodeName: extra-args-minikube
 apiServerExtraArgs:
   admission-control: "Initializers,NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota"
@@ -194,7 +194,7 @@ networking:
   serviceSubnet: 10.96.0.0/12
   podSubnet: 10.244.0.0/16
 etcd:
-  dataDir: /data
+  dataDir: /data/minikube
 nodeName: extra-args-minikube
 apiServerExtraArgs:
   admission-control: "Initializers,NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota"

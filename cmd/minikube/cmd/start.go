@@ -33,6 +33,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/sync/errgroup"
 	cmdcfg "k8s.io/minikube/cmd/minikube/cmd/config"
 	"k8s.io/minikube/cmd/minikube/profile"
 	cmdutil "k8s.io/minikube/cmd/util"
@@ -71,6 +72,8 @@ const (
 	disableDriverMounts   = "disable-driver-mounts"
 	cacheImages           = "cache-images"
 	uuid                  = "uuid"
+	vpnkitSock            = "hyperkit-vpnkit-sock"
+	vsockPorts            = "hyperkit-vsock-ports"
 )
 
 var (
@@ -101,8 +104,11 @@ func runStart(cmd *cobra.Command, args []string) {
 	k8sVersion := viper.GetString(kubernetesVersion)
 	clusterBootstrapper := viper.GetString(cmdcfg.Bootstrapper)
 
+	var groupCacheImages errgroup.Group
 	if shouldCacheImages {
-		go machine.CacheImagesForBootstrapper(k8sVersion, clusterBootstrapper)
+		groupCacheImages.Go(func() error {
+			return machine.CacheImagesForBootstrapper(k8sVersion, clusterBootstrapper)
+		})
 	}
 
 	// NOTE Instantiate docker-machine API
@@ -135,6 +141,8 @@ func runStart(cmd *cobra.Command, args []string) {
 		CPUs:                viper.GetInt(cpus),
 		DiskSize:            diskSizeMB,
 		VMDriver:            viper.GetString(vmDriver),
+		HyperkitVpnKitSock:  viper.GetString(vpnkitSock),
+		HyperkitVSockPorts:  viper.GetStringSlice(vsockPorts),
 		XhyveDiskDriver:     viper.GetString(xhyveDiskDriver),
 		NFSShare:            viper.GetStringSlice(NFSShare),
 		NFSSharesRoot:       viper.GetString(NFSSharesRoot),
@@ -190,6 +198,7 @@ func runStart(cmd *cobra.Command, args []string) {
 	if err != nil && !os.IsNotExist(err) {
 		glog.Errorln("Error loading profile config: ", err)
 	}
+
 	if err == nil {
 		oldKubernetesVersion, err := semver.Make(strings.TrimPrefix(cc.KubernetesConfig.KubernetesVersion, version.VersionPrefix))
 		if err != nil {
@@ -248,7 +257,15 @@ func runStart(cmd *cobra.Command, args []string) {
 	}
 
 	// NOTE Configure machine
+	if shouldCacheImages {
+		fmt.Println("Waiting for image caching to complete...")
+		if err := groupCacheImages.Wait(); err != nil {
+			glog.Errorln("Error caching images: ", err)
+		}
+	}
+
 	fmt.Println("Moving files into cluster...")
+
 	if err := k8sBootstrapper.UpdateCluster(kubernetesConfig); err != nil {
 		glog.Errorln("Error updating cluster: ", err)
 		cmdutil.MaybeReportErrorAndExit(err)
@@ -340,8 +357,7 @@ func runStart(cmd *cobra.Command, args []string) {
 		if viper.GetBool(cfg.WantNoneDriverWarning) {
 			fmt.Println(`===================
 WARNING: IT IS RECOMMENDED NOT TO RUN THE NONE DRIVER ON PERSONAL WORKSTATIONS
-	The 'none' driver will run an insecure kubernetes apiserver as root that may leave the host vulnerable to CSRF attacks
-`)
+	The 'none' driver will run an insecure kubernetes apiserver as root that may leave the host vulnerable to CSRF attacks` + "\n")
 		}
 
 		if os.Getenv("CHANGE_MINIKUBE_NONE_USER") == "" {
@@ -413,11 +429,14 @@ func init() {
 	startCmd.Flags().String(containerRuntime, "", "The container runtime to be used")
 	startCmd.Flags().String(networkPlugin, "", "The name of the network plugin")
 	startCmd.Flags().String(featureGates, "", "A set of key=value pairs that describe feature gates for alpha/experimental features.")
-	startCmd.Flags().Bool(cacheImages, true, "If true, cache docker images for the current bootstrapper and load them into the machine.")
+	startCmd.Flags().Bool(cacheImages, false, "If true, cache docker images for the current bootstrapper and load them into the machine.")
 	startCmd.Flags().Var(&extraOptions, "extra-config",
 		`A set of key=value pairs that describe configuration that may be passed to different components.
 		The key should be '.' separated, and the first part before the dot is the component to apply the configuration to.
 		Valid components are: kubelet, apiserver, controller-manager, etcd, proxy, scheduler.`)
+	startCmd.Flags().String(uuid, "", "Provide VM UUID to restore MAC address (only supported with Hyperkit driver).")
+	startCmd.Flags().String(vpnkitSock, "", "Location of the VPNKit socket used for networking. If empty, disables Hyperkit VPNKitSock, if 'auto' uses Docker for Mac VPNKit connection, otherwise uses the specified VSock.")
+	startCmd.Flags().StringSlice(vsockPorts, []string{}, "List of guest VSock ports that should be exposed as sockets on the host (Only supported on with hyperkit now).")
 	viper.BindPFlags(startCmd.Flags())
 	RootCmd.AddCommand(startCmd)
 }

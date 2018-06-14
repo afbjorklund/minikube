@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -200,7 +201,7 @@ func LoadFromCacheBlocking(cmd runner.CommandRunner, src string) error {
 			break
 		}
 	}
-	dst := filepath.Join(tempLoadDir, filename)
+	dst := path.Join(tempLoadDir, filename)
 	f, err := assets.NewFileAsset(src, tempLoadDir, filename, "0777")
 	if err != nil {
 		return errors.Wrapf(err, "creating copyable file asset: %s", filename)
