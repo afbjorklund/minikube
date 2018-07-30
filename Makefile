@@ -15,7 +15,7 @@
 # Bump these on release
 VERSION_MAJOR ?= 0
 VERSION_MINOR ?= 28
-VERSION_BUILD ?= 0
+VERSION_BUILD ?= 1
 VERSION ?= v$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_BUILD)
 DEB_VERSION ?= $(VERSION_MAJOR).$(VERSION_MINOR)-$(VERSION_BUILD)
 INSTALL_SIZE ?= $(shell du out/minikube-windows-amd64.exe | cut -f1)
@@ -26,13 +26,18 @@ HYPERKIT_BUILD_IMAGE 	?= karalabe/xgo-1.8.3
 BUILD_IMAGE 	?= k8s.gcr.io/kube-cross:v1.9.1-1
 ISO_BUILD_IMAGE ?= $(REGISTRY)/buildroot-image
 
-ISO_VERSION ?= v0.28.0
+ISO_VERSION ?= v0.28.1
 ISO_BUCKET ?= minikube/iso
+
+MINIKUBE_VERSION ?= $(ISO_VERSION)
+MINIKUBE_BUCKET ?= minikube/releases
+MINIKUBE_UPLOAD_LOCATION := gs://${MINIKUBE_BUCKET}
 
 KERNEL_VERSION ?= 4.16.14
 
 GOOS ?= $(shell go env GOOS)
 GOARCH ?= $(shell go env GOARCH)
+GOPATH ?= $(shell go env GOPATH)
 BUILD_DIR ?= ./out
 $(shell mkdir -p $(BUILD_DIR))
 
@@ -164,6 +169,11 @@ else
 		$(ISO_BUILD_IMAGE) /usr/bin/make out/minikube.iso
 endif
 
+iso_in_docker:
+	docker run -it --rm --workdir /mnt --volume $(CURDIR):/mnt $(ISO_DOCKER_EXTRA_ARGS) \
+		--user $(shell id -u):$(shell id -g) --env HOME=/tmp --env IN_DOCKER=1 \
+		$(ISO_BUILD_IMAGE) /bin/bash
+
 test-iso:
 	go test -v $(REPOPATH)/test/integration --tags=iso --minikube-args="--iso-url=file://$(shell pwd)/out/buildroot/output/images/rootfs.iso9660"
 
@@ -182,9 +192,9 @@ drivers: out/docker-machine-driver-hyperkit out/docker-machine-driver-kvm2
 
 .PHONY: images
 images: localkube-image localkube-dind-image localkube-dind-image-devshell
-	gcloud docker -- push gcr.io/k8s-minikube/localkube-image:$(TAG)
-	gcloud docker -- push gcr.io/k8s-minikube/localkube-dind-image:$(TAG)
-	gcloud docker -- push gcr.io/k8s-minikube/localkube-dind-image-devshell:$(TAG)
+	gcloud docker -- push $(REGISTRY)/localkube-image:$(TAG)
+	gcloud docker -- push $(REGISTRY)/localkube-dind-image:$(TAG)
+	gcloud docker -- push $(REGISTRY)/localkube-dind-image-devshell:$(TAG)
 
 .PHONY: integration
 integration: out/minikube
@@ -204,11 +214,11 @@ out/test.d: pkg/minikube/assets/assets.go
 
 -include out/test.d
 test:
-	./test.sh
+	GOPATH=$(GOPATH) ./test.sh
 
 pkg/minikube/assets/assets.go: $(shell find deploy/addons -type f)
 	which go-bindata || GOBIN=$(GOPATH)/bin go get github.com/jteeuwen/go-bindata/...
-	PATH=$(PATH):$(GOPATH)/bin go-bindata -nomemcopy -o pkg/minikube/assets/assets.go -pkg assets deploy/addons/...
+	PATH="$(PATH):$(GOPATH)/bin" go-bindata -nomemcopy -o pkg/minikube/assets/assets.go -pkg assets deploy/addons/...
 
 .PHONY: cross
 cross: out/minikube-linux-amd64 out/minikube-darwin-amd64 out/minikube-windows-amd64.exe
@@ -349,6 +359,11 @@ push-storage-provisioner-image: storage-provisioner-image
 release-iso: minikube_iso checksum
 	gsutil cp out/minikube.iso gs://$(ISO_BUCKET)/minikube-$(ISO_VERSION).iso
 	gsutil cp out/minikube.iso.sha256 gs://$(ISO_BUCKET)/minikube-$(ISO_VERSION).iso.sha256
+
+.PHONY: release-minikube
+release-minikube: out/minikube checksum
+	gsutil cp out/minikube-$(GOOS)-$(GOARCH) $(MINIKUBE_UPLOAD_LOCATION)/$(MINIKUBE_VERSION)/minikube-$(GOOS)-$(GOARCH)
+	gsutil cp out/minikube-$(GOOS)-$(GOARCH).sha256 $(MINIKUBE_UPLOAD_LOCATION)/$(MINIKUBE_VERSION)/minikube-$(GOOS)-$(GOARCH).sha256
 
 out/docker-machine-driver-kvm2.d:
 	$(MAKEDEPEND) out/docker-machine-driver-kvm2 $(ORG) $(KVM_DRIVER_FILES) $^ > $@

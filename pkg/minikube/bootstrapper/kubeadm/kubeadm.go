@@ -160,12 +160,6 @@ func (k *KubeadmBootstrapper) StartCluster(k8s config.KubernetesConfig) error {
 		return errors.Wrapf(err, "kubeadm init error %s running command: %s", b.String(), out)
 	}
 
-	//TODO(r2d4): get rid of global here
-	master = k8s.NodeName
-	if err := util.RetryAfter(200, unmarkMaster, time.Second*1); err != nil {
-		return errors.Wrap(err, "timed out waiting to unmark master")
-	}
-
 	if err := util.RetryAfter(100, elevateKubeSystemPrivileges, time.Millisecond*500); err != nil {
 		return errors.Wrap(err, "timed out waiting to elevate kube-system RBAC privileges")
 	}
@@ -293,6 +287,13 @@ func NewKubeletConfig(hostname, ip string, k8s config.KubernetesConfig) (string,
 
 	extraOpts = SetContainerRuntime(extraOpts, k8s.ContainerRuntime)
 	extraFlags := convertToFlags(extraOpts)
+
+	// parses a map of the feature gates for kubelet
+	_, kubeletFeatureArgs, err := ParseFeatureArgs(k8s.FeatureGates)
+	if err != nil {
+		return "", errors.Wrap(err, "parses feature gate config for kubelet")
+	}
+
 	b := bytes.Buffer{}
 	opts := struct {
 		ExtraOptions     string
@@ -302,7 +303,7 @@ func NewKubeletConfig(hostname, ip string, k8s config.KubernetesConfig) (string,
 		NodeIP           string
 	}{
 		ExtraOptions:     extraFlags,
-		FeatureGates:     k8s.FeatureGates,
+		FeatureGates:     kubeletFeatureArgs,
 		ContainerRuntime: k8s.ContainerRuntime,
 		Hostname:         hostname,
 		NodeIP:           ip,
@@ -432,8 +433,14 @@ func generateConfig(k8s config.KubernetesConfig) (string, error) {
 		return "", errors.Wrap(err, "parsing kubernetes version")
 	}
 
+	// parses a map of the feature gates for kubeadm and component
+	kubeadmFeatureArgs, componentFeatureArgs, err := ParseFeatureArgs(k8s.FeatureGates)
+	if err != nil {
+		return "", errors.Wrap(err, "parses feature gate config for kubeadm and component")
+	}
+
 	// generates a map of component to extra args for apiserver, controller-manager, and scheduler
-	extraComponentConfig, err := NewComponentExtraArgs(k8s.ExtraOptions, version, k8s.FeatureGates)
+	extraComponentConfig, err := NewComponentExtraArgs(k8s.ExtraOptions, version, componentFeatureArgs)
 	if err != nil {
 		return "", errors.Wrap(err, "generating extra component config for kubeadm")
 	}
@@ -448,6 +455,8 @@ func generateConfig(k8s config.KubernetesConfig) (string, error) {
 		EtcdDataDir       string
 		NodeName          string
 		ExtraArgs         []ComponentExtraArgs
+		FeatureArgs       map[string]bool
+		NoTaintMaster     bool
 		Token             string
 	}{
 		CertDir:     util.DefaultCertPath,
@@ -460,7 +469,13 @@ func generateConfig(k8s config.KubernetesConfig) (string, error) {
 		EtcdDataDir:       "/data/minikube", //TODO(r2d4): change to something else persisted
 		NodeName:          k8s.NodeName,
 		ExtraArgs:         extraComponentConfig,
+		FeatureArgs:       kubeadmFeatureArgs,
+		NoTaintMaster:     false,
 		Token:             k8s.BootstrapToken,
+	}
+
+	if version.GTE(semver.MustParse("1.10.0-alpha.0")) {
+		opts.NoTaintMaster = true
 	}
 
 	b := bytes.Buffer{}

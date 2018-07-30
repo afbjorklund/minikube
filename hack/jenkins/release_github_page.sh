@@ -53,7 +53,7 @@ curl -Lo minikube https://storage.googleapis.com/minikube/releases/${TAGNAME}/mi
 \`\`\`
 Feel free to leave off the \`\`\`sudo mv minikube /usr/local/bin\`\`\` if you would like to add minikube to your path manually.
 
-Or you can install via homebrew with `brew cask install minikube`.
+Or you can install via homebrew with \`brew cask install minikube\`.
 
 ### Linux
 \`\`\`shell
@@ -125,5 +125,11 @@ FILES_TO_UPLOAD=(
 
 for UPLOAD in "${FILES_TO_UPLOAD[@]}"
 do
-    github-release upload --user ${GITHUB_ORGANIZATION} --repo ${GITHUB_REPO} --tag ${TAGNAME} --name $UPLOAD --file out/$UPLOAD
+    n=0
+    until [ $n -ge 5 ]
+    do
+        github-release upload --user ${GITHUB_ORGANIZATION} --repo ${GITHUB_REPO} --tag ${TAGNAME} --name $UPLOAD --file out/$UPLOAD && break
+        n=$[$n+1]
+        sleep 15
+    done
 done

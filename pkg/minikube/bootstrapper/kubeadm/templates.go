@@ -27,9 +27,11 @@ var kubeadmConfigTemplate = template.Must(template.New("kubeadmConfigTemplate").
 	"printMapInOrder": printMapInOrder,
 }).Parse(`apiVersion: kubeadm.k8s.io/v1alpha1
 kind: MasterConfiguration
+{{if .NoTaintMaster}}noTaintMaster: true{{end}}
 api:
   advertiseAddress: {{.AdvertiseAddress}}
   bindPort: {{.APIServerPort}}
+  controlPlaneEndpoint: localhost
 kubernetesVersion: {{.KubernetesVersion}}
 certificatesDir: {{.CertDir}}
 networking:
@@ -40,6 +42,8 @@ etcd:
 nodeName: {{.NodeName}}
 {{range .ExtraArgs}}{{.Component}}:{{range $i, $val := printMapInOrder .Options ": " }}
   {{$val}}{{end}}
+{{end}}{{if .FeatureArgs}}featureGates: {{range $i, $val := .FeatureArgs}}
+  {{$i}}: {{$val}}{{end}}
 {{end}}{{if .Token}}token: {{.Token}}{{end}}`))
 
 var kubeletSystemdTemplate = template.Must(template.New("kubeletSystemdTemplate").Parse(`
@@ -75,8 +79,10 @@ sudo /usr/bin/kubeadm alpha phase controlplane all --config {{.KubeadmConfigFile
 sudo /usr/bin/kubeadm alpha phase etcd local --config {{.KubeadmConfigFile}}
 `))
 
-var kubeadmInitTemplate = template.Must(template.New("kubeadmInitTemplate").Parse(
-	"sudo /usr/bin/kubeadm init --config {{.KubeadmConfigFile}} {{if .SkipPreflightChecks}}--skip-preflight-checks{{else}}{{range .Preflights}}--ignore-preflight-errors={{.}} {{end}}{{end}}"))
+var kubeadmInitTemplate = template.Must(template.New("kubeadmInitTemplate").Parse(`
+sudo /usr/bin/kubeadm init --config {{.KubeadmConfigFile}} {{if .SkipPreflightChecks}}--skip-preflight-checks{{else}}{{range .Preflights}}--ignore-preflight-errors={{.}} {{end}}{{end}} &&
+sudo /usr/bin/kubeadm alpha phase addon kube-dns
+`))
 
 var kubeadmJoinTemplate = template.Must(template.New("kubeadmJoinTemplate").Parse("sudo /usr/bin/kubeadm join --token {{.Token}} {{.ServerAddress}}"))
 

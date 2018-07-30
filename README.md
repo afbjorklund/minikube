@@ -31,7 +31,13 @@ curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/miniku
 ```
 
 ### Windows
-Download the [minikube-windows-amd64.exe](https://storage.googleapis.com/minikube/releases/latest/minikube-windows-amd64.exe) file, rename it to `minikube.exe` and add it to your path.
+
+Install with [Chocolatey](https://chocolatey.org/):
+```shell
+choco install minikube
+```
+Install manually: Download the [minikube-windows-amd64.exe](https://storage.googleapis.com/minikube/releases/latest/minikube-windows-amd64.exe) file, rename it to `minikube.exe` and add it to your path.
+
 
 ### Linux Continuous Integration without VM Support
 Example with kubectl installation:
@@ -66,7 +72,8 @@ done
 * [Linux]
     * [Arch Linux AUR](https://aur.archlinux.org/packages/minikube/)
     * [Fedora/CentOS/Red Hat COPR](https://copr.fedorainfracloud.org/coprs/antonpatsev/minikube-rpm/)
-* [Windows] [Chocolatey](https://chocolatey.org/packages/Minikube)
+    * [openSUSE/SUSE Linux Enterprise](https://build.opensuse.org/package/show/Virtualization:containers/minikube)
+* [Windows] Download the [minikube-windows-amd64.exe](https://storage.googleapis.com/minikube/releases/latest/minikube-windows-amd64.exe) file, rename it to `minikube.exe` and add it to your path.
 
 ### Minikube Version Management
 
