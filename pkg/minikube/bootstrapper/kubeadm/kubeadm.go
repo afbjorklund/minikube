@@ -160,6 +160,14 @@ func (k *KubeadmBootstrapper) StartCluster(k8s config.KubernetesConfig) error {
 		return errors.Wrapf(err, "kubeadm init error %s running command: %s", b.String(), out)
 	}
 
+	if version.LT(semver.MustParse("1.10.0-alpha.0")) {
+		//TODO(r2d4): get rid of global here
+		master = k8s.NodeName
+		if err := util.RetryAfter(200, unmarkMaster, time.Second*1); err != nil {
+			return errors.Wrap(err, "timed out waiting to unmark master")
+		}
+	}
+
 	if err := util.RetryAfter(100, elevateKubeSystemPrivileges, time.Millisecond*500); err != nil {
 		return errors.Wrap(err, "timed out waiting to elevate kube-system RBAC privileges")
 	}
@@ -192,7 +200,6 @@ sudo systemctl start kubelet
 	return nil
 }
 
-//TODO(r2d4): Split out into shared function between localkube and kubeadm
 func addAddons(files *[]assets.CopyableFile) error {
 	// add addons to file list
 	// custom addons
@@ -264,6 +271,11 @@ func SetContainerRuntime(cfg map[string]string, runtime string) map[string]strin
 		cfg["container-runtime"] = "remote"
 		cfg["container-runtime-endpoint"] = "/var/run/crio/crio.sock"
 		cfg["image-service-endpoint"] = "/var/run/crio/crio.sock"
+		cfg["runtime-request-timeout"] = "15m"
+	case "containerd":
+		cfg["container-runtime"] = "remote"
+		cfg["container-runtime-endpoint"] = "unix:///run/containerd/containerd.sock"
+		cfg["image-service-endpoint"] = "unix:///run/containerd/containerd.sock"
 		cfg["runtime-request-timeout"] = "15m"
 	default:
 		cfg["container-runtime"] = runtime

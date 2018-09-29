@@ -1,10 +1,12 @@
 reviewers:
   - dlorenc
   - aaron-prindle
-  - r2d4
+  - balopat
+  - tstromberg
 approvers:
   - dlorenc
   - luxas
   - aaron-prindle
   - jimmidyson
-  - r2d4
+  - balopat
+  - tstromberg

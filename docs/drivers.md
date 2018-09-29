@@ -41,7 +41,10 @@ $ newgrp libvirt
 Then install the driver itself:
 
 ```shell
-curl -LO https://storage.googleapis.com/minikube/releases/latest/docker-machine-driver-kvm2 && chmod +x docker-machine-driver-kvm2 && sudo mv docker-machine-driver-kvm2 /usr/local/bin/
+curl -Lo docker-machine-driver-kvm2 https://storage.googleapis.com/minikube/releases/latest/docker-machine-driver-kvm2 \
+&& chmod +x docker-machine-driver-kvm2 \
+&& sudo cp docker-machine-driver-kvm2 /usr/local/bin/ \
+&& rm docker-machine-driver-kvm2
 ```
 
 To use the driver you would do:
@@ -85,9 +88,10 @@ It is built from the minikube source tree, and uses [moby/hyperkit](http://githu
 To install the hyperkit driver:
 
 ```shell
-curl -LO https://storage.googleapis.com/minikube/releases/latest/docker-machine-driver-hyperkit \
+curl -Lo docker-machine-driver-hyperkit https://storage.googleapis.com/minikube/releases/latest/docker-machine-driver-hyperkit \
 && chmod +x docker-machine-driver-hyperkit \
-&& sudo mv docker-machine-driver-hyperkit /usr/local/bin/ \
+&& sudo cp docker-machine-driver-hyperkit /usr/local/bin/ \
+&& rm docker-machine-driver-hyperkit \
 && sudo chown root:wheel /usr/local/bin/docker-machine-driver-hyperkit \
 && sudo chmod u+s /usr/local/bin/docker-machine-driver-hyperkit
 ```
@@ -95,6 +99,10 @@ curl -LO https://storage.googleapis.com/minikube/releases/latest/docker-machine-
 The hyperkit driver currently requires running as root to use the vmnet framework to setup networking.
 
 If you encountered errors like `Could not find hyperkit executable`, you might need to install [Docker for Mac](https://store.docker.com/editions/community/docker-ce-desktop-mac)
+
+If you are using [dnsmasq](http://www.thekelleys.org.uk/dnsmasq/doc.html) in your setup and cluster creation fails (stuck at kube-dns initialization) you might need to add `listen-address=192.168.64.1` to `dnsmasq.conf`.
+
+*Note: If `dnsmasq.conf` contains `listen-address=127.0.0.1` kubernetes discovers dns at 127.0.0.1:53 and tries to use it using bridge ip address, but dnsmasq replies only to reqests from 127.0.0.1*
 
 #### xhyve driver
 
@@ -112,4 +120,4 @@ $ sudo chmod u+s $(brew --prefix)/opt/docker-machine-driver-xhyve/bin/docker-mac
 
 Hyper-v users may need to create a new external network switch as described [here](https://docs.docker.com/machine/drivers/hyper-v/). This step may prevent a problem in which `minikube start` hangs indefinitely, unable to ssh into the minikube virtual machine. In this add, add the `--hyperv-virtual-switch=switch-name` argument to the `minikube start` command.
 
-On some machines, having **dynamic memory management** turned on for the minikube VM can cause problems of unexpected and random restarts which manifests itself in simply losing the connection to the cluster, after which `minikube status` would simply state `localkube stopped`. Machine restarts are caused due to following Hyper-V error: `The dynamic memory balancer could not add memory to the virtual machine 'minikube' because its configured maximum has been reached`. **Solution**: turned the dynamic memory management in hyper-v settings off (and allocate a fixed amount of memory to the machine).
+On some machines, having **dynamic memory management** turned on for the minikube VM can cause problems of unexpected and random restarts which manifests itself in simply losing the connection to the cluster, after which `minikube status` would simply state `stopped`. Machine restarts are caused due to following Hyper-V error: `The dynamic memory balancer could not add memory to the virtual machine 'minikube' because its configured maximum has been reached`. **Solution**: turned the dynamic memory management in hyper-v settings off (and allocate a fixed amount of memory to the machine).
