@@ -6,6 +6,9 @@ To use [rkt](https://github.com/coreos/rkt) as the container runtime run:
 $ minikube start --container-runtime=rkt
 ```
 
+Needs [rktlet](https://github.com/kubernetes-incubator/rktlet) which is currently **not** included with minikube.
+
+Support for [rktnetes](https://kubernetes.io/blog/2016/07/rktnetes-brings-rkt-container-engine-to-kubernetes/) was added in 1.3 and removed in 1.11.
 
 ### Using CRI-O
 
