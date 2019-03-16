@@ -66,6 +66,11 @@ KVM_DRIVER_FILES := ./cmd/drivers/kvm/
 
 MINIKUBE_TEST_FILES := ./cmd/... ./pkg/...
 
+# npm install -g markdownlint-cli
+MARKDOWNLINT ?= markdownlint
+
+MINIKUBE_MARKDOWN_FILES := README.md docs CONTRIBUTING.md CHANGELOG.md
+
 MINIKUBE_BUILD_TAGS := container_image_ostree_stub containers_image_openpgp
 MINIKUBE_INTEGRATION_BUILD_TAGS := integration $(MINIKUBE_BUILD_TAGS)
 SOURCE_DIRS = cmd pkg test
@@ -230,6 +235,10 @@ fmt:
 .PHONY: lint
 lint:
 	@golint $(MINIKUBE_TEST_FILES)
+
+.PHONY: mdlint
+mdlint:
+	@$(MARKDOWNLINT) $(MINIKUBE_MARKDOWN_FILES)
 
 out/docs/minikube.md: $(shell find cmd) $(shell find pkg/minikube/constants) pkg/minikube/assets/assets.go
 	cd $(GOPATH)/src/$(REPOPATH) && go run -ldflags="$(MINIKUBE_LDFLAGS)" hack/gen_help_text.go
