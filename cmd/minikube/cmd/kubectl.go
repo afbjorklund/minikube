@@ -32,6 +32,10 @@ import (
 	"k8s.io/minikube/pkg/minikube/machine"
 )
 
+var (
+	kubectlPathMode bool
+)
+
 // kubectlCmd represents the kubectl command
 var kubectlCmd = &cobra.Command{
 	Use:   "kubectl",
@@ -68,6 +72,11 @@ kubectl get pods --namespace kube-system`,
 			exit.WithError("Failed to download kubectl", err)
 		}
 
+		if kubectlPathMode {
+			console.OutLn(path)
+			return
+		}
+
 		glog.Infof("Running %s %v", path, args)
 		c := exec.Command(path, args...)
 		c.Stdin = os.Stdin
@@ -88,5 +97,6 @@ kubectl get pods --namespace kube-system`,
 }
 
 func init() {
+	kubectlCmd.Flags().BoolVar(&kubectlPathMode, "path", false, "Print kubectl path instead of running it")
 	RootCmd.AddCommand(kubectlCmd)
 }
