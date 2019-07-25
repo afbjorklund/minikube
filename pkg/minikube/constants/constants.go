@@ -188,6 +188,12 @@ var NewestKubernetesVersion = "v1.16.0-rc.2"
 // OldestKubernetesVersion is the oldest Kubernetes version to test against
 var OldestKubernetesVersion = "v1.11.10"
 
+// DefaultBuildDockerVersion is the Docker version to use for building images
+var DefaultBuildDockerVersion = "18.09.9"
+
+// FallbackBuildDockerVersion is old Docker version to use for building images
+var FallbackBuildDockerVersion = "17.09.0-ce"
+
 // ConfigFile is the path of the config file
 var ConfigFile = MakeMiniPath("config", "config.json")
 
@@ -230,6 +236,41 @@ const (
 var ImageRepositories = map[string][]string{
 	"global": {""},
 	"cn":     {"registry.cn-hangzhou.aliyuncs.com/google_containers"},
+}
+
+// GetDockerReleaseURL gets the location of a docker client archive
+func GetDockerReleaseURL(binaryName, version, osName, archName string) string {
+
+	var osDir string
+	switch osName {
+	case "linux":
+		osDir = "linux"
+	case "darwin":
+		osDir = "mac"
+	case "windows":
+		osDir = "win"
+	default:
+		osDir = osName
+	}
+
+	var archDir string
+	switch archName {
+	case "amd64":
+		archDir = "x86_64"
+	default:
+		archDir = archName
+	}
+
+	var binaryType string
+	switch osName {
+	case "windows":
+		binaryType = "zip"
+	default:
+		binaryType = "tgz"
+	}
+
+	binaryArchive := fmt.Sprintf("%s-%s.%s", binaryName, version, binaryType)
+	return fmt.Sprintf("https://download.docker.com/%s/static/stable/%s/%s", osDir, archDir, binaryArchive)
 }
 
 // GetKubernetesReleaseURL gets the location of a kubernetes client

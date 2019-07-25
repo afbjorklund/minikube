@@ -769,7 +769,7 @@ func transferBinaries(cfg config.KubernetesConfig, c command.Runner) error {
 	for _, name := range constants.KubeadmBinaries {
 		name := name
 		g.Go(func() error {
-			src, err := machine.CacheBinary(name, cfg.KubernetesVersion, "linux", runtime.GOARCH)
+			src, err := machine.CacheKubernetesBinary(name, cfg.KubernetesVersion, "linux", runtime.GOARCH)
 			if err != nil {
 				return errors.Wrapf(err, "downloading %s", name)
 			}
