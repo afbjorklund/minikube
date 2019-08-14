@@ -36,6 +36,7 @@ import (
 	"github.com/docker/machine/libmachine/provision/serviceaction"
 	"github.com/docker/machine/libmachine/swarm"
 	"github.com/pkg/errors"
+	"github.com/shirou/gopsutil/disk"
 	"k8s.io/minikube/pkg/minikube/assets"
 	"k8s.io/minikube/pkg/minikube/command"
 	"k8s.io/minikube/pkg/minikube/config"
@@ -87,6 +88,16 @@ func (p *BuildrootProvisioner) GenerateDockerOptions(dockerPort int) (*provision
 	driverNameLabel := fmt.Sprintf("provider=%s", p.Driver.DriverName())
 	p.EngineOptions.Labels = append(p.EngineOptions.Labels, driverNameLabel)
 
+	rootfs := true
+	partitions, err := disk.Partitions(false)
+	if err == nil {
+		for _, partition := range partitions {
+			if partition.Mountpoint == "/" {
+				rootfs = partition.Fstype == "rootfs"
+			}
+		}
+	}
+
 	engineConfigTmpl := `[Unit]
 Description=Docker Application Container Engine
 Documentation=https://docs.docker.com
@@ -96,8 +107,15 @@ Requires= minikube-automount.service docker.socket
 [Service]
 Type=notify
 
+`
+	if rootfs {
+		engineConfigTmpl += `
 # DOCKER_RAMDISK disables pivot_root in Docker, using MS_MOVE instead.
 Environment=DOCKER_RAMDISK=yes
+`
+	}
+
+	engineConfigTmpl += `
 {{range .EngineOptions.Env}}Environment={{.}}
 {{end}}
 
