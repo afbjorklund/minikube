@@ -336,11 +336,15 @@ func listCRIContainers(cr CommandRunner, filter string) ([]string, error) {
 	var err error
 	var rr *command.RunResult
 	state := "Running"
+	crictl, err := exec.LookPath("crictl")
+	if err != nil {
+		return nil, err
+	}
 	if filter != "" {
-		c := exec.Command("sudo", "crictl", "ps", "-a", fmt.Sprintf("--name=%s", filter), fmt.Sprintf("--state=%s", state), "--quiet")
+		c := exec.Command("sudo", crictl, "ps", "-a", fmt.Sprintf("--name=%s", filter), fmt.Sprintf("--state=%s", state), "--quiet")
 		rr, err = cr.RunCmd(c)
 	} else {
-		rr, err = cr.RunCmd(exec.Command("sudo", "crictl", "ps", "-a", fmt.Sprintf("--state=%s", state), "--quiet"))
+		rr, err = cr.RunCmd(exec.Command("sudo", crictl, "ps", "-a", fmt.Sprintf("--state=%s", state), "--quiet"))
 	}
 	if err != nil {
 		return nil, err
@@ -361,7 +365,11 @@ func killCRIContainers(cr CommandRunner, ids []string) error {
 	}
 	glog.Infof("Killing containers: %s", ids)
 
-	args := append([]string{"crictl", "rm"}, ids...)
+	crictl, err := exec.LookPath("crictl")
+	if err != nil {
+		return err
+	}
+	args := append([]string{crictl, "rm"}, ids...)
 	c := exec.Command("sudo", args...)
 	if _, err := cr.RunCmd(c); err != nil {
 		return errors.Wrap(err, "kill cri containers.")
@@ -375,7 +383,12 @@ func stopCRIContainers(cr CommandRunner, ids []string) error {
 		return nil
 	}
 	glog.Infof("Stopping containers: %s", ids)
-	args := append([]string{"crictl", "rm"}, ids...)
+
+	crictl, err := exec.LookPath("crictl")
+	if err != nil {
+		return err
+	}
+	args := append([]string{crictl, "rm"}, ids...)
 	c := exec.Command("sudo", args...)
 	if _, err := cr.RunCmd(c); err != nil {
 		return errors.Wrap(err, "stop cri containers")
@@ -430,7 +443,13 @@ func generateCRIOConfig(cr CommandRunner, imageRepository string, k8sVersion str
 // criContainerLogCmd returns the command to retrieve the log for a container based on ID
 func criContainerLogCmd(id string, len int, follow bool) string {
 	var cmd strings.Builder
-	cmd.WriteString("sudo crictl logs ")
+	crictl, err := exec.LookPath("crictl")
+	if err != nil {
+		crictl = "crictl"
+	}
+	cmd.WriteString("sudo ")
+	cmd.WriteString(crictl)
+	cmd.WriteString(" logs ")
 	if len > 0 {
 		cmd.WriteString(fmt.Sprintf("--tail %d ", len))
 	}

@@ -140,12 +140,16 @@ func (f *FakeRunner) RunCmd(cmd *exec.Cmd) (*command.RunResult, error) {
 		root = true
 		bin, args = xargs[1], xargs[2:]
 	}
+	crictl, err := exec.LookPath("crictl")
+	if err != nil {
+		crictl = "crictl"
+	}
 	switch bin {
 	case "systemctl":
 		return buffer(f.systemctl(args, root))
 	case "docker":
 		return buffer(f.docker(args, root))
-	case "crictl":
+	case "crictl", crictl:
 		return buffer(f.crictl(args, root))
 	case "crio":
 		return buffer(f.crio(args, root))
