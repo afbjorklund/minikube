@@ -4,8 +4,8 @@
 #
 ################################################################################
 
-CONMON_VERSION = v2.0.6
-CONMON_COMMIT = 29c336700f2999acf9db07662b4a61355076e64a
+CONMON_VERSION = v2.0.15
+CONMON_COMMIT = 1bddbf7051a973f4a4fecf06faa0c48e82f1e9e1
 CONMON_SITE = https://github.com/containers/conmon/archive
 CONMON_SOURCE = $(CONMON_VERSION).tar.gz
 CONMON_LICENSE = Apache-2.0
