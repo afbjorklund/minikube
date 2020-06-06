@@ -2,32 +2,30 @@ ARG COMMIT_SHA
 # using base image created by kind https://github.com/kubernetes-sigs/kind/blob/master/images/base/Dockerfile
 # which is an ubuntu 19.10 with an entry-point that helps running systemd
 # could be changed to any debian that can run systemd
-FROM kindest/base:v20200317-92225082 as base
+FROM gcr.io/k8s-minikube/kindbase:v0.0.10-snapshot as base
 USER root
 # specify version of everything explicitly using 'apt-cache policy'
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    lz4=1.9.1-1 \
-    gnupg=2.2.12-1ubuntu3 \ 
-    sudo=1.8.27-1ubuntu4.1 \
-    docker.io=19.03.2-0ubuntu1 \
-    openssh-server=1:8.0p1-6build1 \
-    dnsutils=1:9.11.5.P4+dfsg-5.1ubuntu2.1 \
-    # libglib2.0-0 is required for conmon, which is required for podman
-    libglib2.0-0=2.62.1-1 \
-    && rm /etc/crictl.yaml
+RUN clean-install \
+    lz4 \
+    gnupg \
+    sudo \
+    openssh-server \
+    dnsutils
+
+RUN clean-install containerd
+
+RUN clean-install docker.io
 
 # install cri-o based on https://github.com/cri-o/cri-o/commit/96b0c34b31a9fc181e46d7d8e34fb8ee6c4dc4e1#diff-04c6e90faac2675aa89e2176d2eec7d8R128
 RUN sh -c "echo 'deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_19.10/ /' > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list" && \    
     curl -LO https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable/xUbuntu_19.10/Release.key && \
     apt-key add - < Release.key && apt-get update && \
-    apt-get install -y --no-install-recommends cri-o-1.17
+    clean-install cri-o-1.17 cri-tools
 
 # install podman
-RUN apt-get install -y --no-install-recommends podman
-
 # install varlink
-RUN apt-get install -y --no-install-recommends varlink
-
+# libglib2.0-0 is required for conmon, which is required for podman
+RUN clean-install podman varlink libglib2.0-0
 
 # disable non-docker runtimes by default
 RUN systemctl disable containerd && systemctl disable crio && rm /etc/crictl.yaml
@@ -50,14 +48,4 @@ USER root
 # kind base-image entry-point expects a "kind" folder for product_name,product_uuid
 # https://github.com/kubernetes-sigs/kind/blob/master/images/base/files/usr/local/bin/entrypoint
 RUN mkdir -p /kind
-# Deleting leftovers
-RUN apt-get clean -y && rm -rf \
-  /var/cache/debconf/* \
-  /var/lib/apt/lists/* \
-  /var/log/* \
-  /tmp/* \
-  /var/tmp/* \
-  /usr/share/doc/* \
-  /usr/share/man/* \
-  /usr/share/local/* \
-  RUN echo "kic! Build: ${COMMIT_SHA} Time :$(date)" > "/kic.txt"
+RUN echo "kic! Build: ${COMMIT_SHA} Time :$(date)" > "/kic.txt"
