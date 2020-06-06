@@ -526,6 +526,15 @@ endif
 storage-provisioner-image: out/storage-provisioner-$(GOARCH) ## Build storage-provisioner docker image
 	docker build -t $(STORAGE_PROVISIONER_IMAGE) -f deploy/storage-provisioner/Dockerfile  --build-arg arch=$(GOARCH) .
 
+KIND_BASE_TAG?=$(shell echo "$$(date +v%Y%m%d)-92225082")
+
+# required for buildx
+export DOCKER_CLI_EXPERIMENTAL=enabled
+
+.PHONY: kind-base-image
+kind-base-image:
+	docker buildx build -f ./hack/images/kindbase.Dockerfile -t kindest/base:$(KIND_BASE_TAG) --pull hack/images
+
 .PHONY: kic-base-image
 kic-base-image: ## builds the base image used for kic.
 	docker rmi -f $(REGISTRY)/kicbase:$(KIC_VERSION)-snapshot || true
