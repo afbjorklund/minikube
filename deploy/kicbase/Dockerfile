@@ -2,7 +2,7 @@ ARG COMMIT_SHA
 # using base image created by kind https://github.com/kubernetes-sigs/kind/blob/v0.8.1/images/base/Dockerfile
 # which is an ubuntu 20.04 with an entry-point that helps running systemd
 # could be changed to any debian that can run systemd
-FROM gcr.io/k8s-minikube/kindbase:focal as base
+FROM localhost:5000/kindbase:focal-arm64 as base
 USER root
 
 # install system requirements from the regular distro repositories

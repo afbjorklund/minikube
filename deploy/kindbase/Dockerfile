@@ -19,7 +19,7 @@
 
 # start from ubuntu 20.04, this image is reasonably small as a starting point
 # for a kubernetes node image, it doesn't contain much we don't need
-FROM ubuntu:focal
+FROM arm64v8/ubuntu:focal
 
 # copy in static files (configs, scripts)
 COPY files/ /

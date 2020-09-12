@@ -20,8 +20,8 @@ RAW_VERSION=$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_BUILD)
 VERSION ?= v$(RAW_VERSION)
 
 KUBERNETES_VERSION ?= $(shell egrep "DefaultKubernetesVersion =" pkg/minikube/constants/constants.go | cut -d \" -f2)
-KIND_VERSION ?= focal
-KIC_VERSION ?= $(shell egrep "Version =" pkg/drivers/kic/types.go | cut -d \" -f2)
+KIND_VERSION ?= focal-arm64
+KIC_VERSION ?= $(shell egrep "Version =" pkg/drivers/kic/types.go | cut -d \" -f2)-arm64
 
 # Default to .0 for higher cache hit rates, as build increments typically don't require new ISO versions
 ISO_VERSION ?= v$(VERSION_MAJOR).$(VERSION_MINOR).0
@@ -581,14 +581,19 @@ storage-provisioner-image: out/storage-provisioner-$(GOARCH) ## Build storage-pr
 .PHONY: kind-base-image
 kind-base-image: ## builds the base image used for kind.
 	docker rmi -f $(KIND_BASE_IMAGE_GCR)-snapshot || true
-	docker build -f ./deploy/kindbase/Dockerfile -t local/kindbase:$(KIND_VERSION)-snapshot ./deploy/kindbase
+	docker buildx build --platform=linux/arm64 --load -f ./deploy/kindbase/Dockerfile -t local/kindbase:$(KIND_VERSION)-snapshot ./deploy/kindbase
 	docker tag local/kindbase:$(KIND_VERSION)-snapshot $(KIND_BASE_IMAGE_GCR)-snapshot
 	docker tag local/kindbase:$(KIND_VERSION)-snapshot $(KIND_BASE_IMAGE_GCR)
+	docker container inspect --format '{{.Id}}' registry || docker run -d -p 5000:5000 --restart=always --name registry registry:2
+	docker tag local/kindbase:$(KIND_VERSION)-snapshot localhost:5000/kindbase:$(KIND_VERSION)
+	docker push localhost:5000/kindbase:$(KIND_VERSION)
 
 .PHONY: kic-base-image
 kic-base-image: kind-base-image ## builds the base image used for kic.
 	docker rmi -f $(KIC_BASE_IMAGE_GCR)-snapshot || true
-	docker build -f ./deploy/kicbase/Dockerfile -t local/kicbase:$(KIC_VERSION)-snapshot  --build-arg COMMIT_SHA=${VERSION}-$(COMMIT) --cache-from $(KIC_BASE_IMAGE_GCR) --target base ./deploy/kicbase
+	docker pull localhost:5000/kindbase:$(KIND_VERSION)
+	docker buildx create --driver-opt network=host --use
+	docker buildx build --platform=linux/arm64 --load -f ./deploy/kicbase/Dockerfile -t local/kicbase:$(KIC_VERSION)-snapshot  --build-arg COMMIT_SHA=${VERSION}-$(COMMIT) --cache-from $(KIC_BASE_IMAGE_GCR) --target base ./deploy/kicbase
 	docker tag local/kicbase:$(KIC_VERSION)-snapshot $(KIC_BASE_IMAGE_GCR)-snapshot
 	docker tag local/kicbase:$(KIC_VERSION)-snapshot $(KIC_BASE_IMAGE_GCR)
 	docker tag local/kicbase:$(KIC_VERSION)-snapshot $(KIC_BASE_IMAGE_HUB)
