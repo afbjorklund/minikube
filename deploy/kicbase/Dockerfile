@@ -5,21 +5,6 @@ ARG COMMIT_SHA
 FROM gcr.io/k8s-minikube/kindbase:v20200430-2c0eee40 as base
 USER root
 
-# remove files that were installed by kind, replaced by packages
-RUN rm \
-    /etc/crictl.yaml \
-    /etc/systemd/system/multi-user.target.wants/containerd.service \
-    /opt/cni/bin/host-local \
-    /opt/cni/bin/loopback \
-    /opt/cni/bin/portmap \
-    /opt/cni/bin/ptp \
-    /usr/local/bin/containerd \
-    /usr/local/bin/containerd-shim \
-    /usr/local/bin/containerd-shim-runc-v2 \
-    /usr/local/bin/crictl \
-    /usr/local/bin/ctr \
-    /usr/local/sbin/runc
-
 # install system requirements from the regular distro repositories
 RUN clean-install \
     lz4 \
