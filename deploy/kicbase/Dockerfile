@@ -24,17 +24,16 @@ RUN sh -c "echo 'deb http://download.opensuse.org/repositories/devel:/kubic:/lib
     apt-key add - < Release.key && \
     clean-install containers-common catatonit conmon containernetworking-plugins cri-tools podman-plugins varlink
 
-# install cri-o based on https://github.com/cri-o/cri-o/commit/96b0c34b31a9fc181e46d7d8e34fb8ee6c4dc4e1#diff-04c6e90faac2675aa89e2176d2eec7d8R128
-RUN sh -c "echo 'deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/1.18:/1.18.3/xUbuntu_20.04/ /' > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list" && \
-    curl -LO https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/1.18:/1.18.3/xUbuntu_20.04/Release.key && \
+# install cri-o
+RUN sh -c "echo 'deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/1.18/xUbuntu_20.04/ /' > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list" && \
+    curl -LO https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/1.18/xUbuntu_20.04/Release.key && \
     apt-key add - < Release.key && \
-    clean-install cri-o=1.18.3~3
+    clean-install cri-o
 
 # install podman
-RUN sh -c "echo 'deb https://dl.bintray.com/afbjorklund/podman focal main' > /etc/apt/sources.list.d/podman.list" && \
-    curl -L https://bintray.com/user/downloadSubjectPublicKey?username=afbjorklund -o afbjorklund-public.key.asc && \
-    apt-key add - < afbjorklund-public.key.asc && \
-    clean-install podman=1.9.3~1
+RUN sh -c "echo 'deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_20.04/ /' > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list" && \
+    curl -LO https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_20.04/Release.key && \
+    clean-install podman
 
 RUN mkdir -p /usr/lib/cri-o-runc/sbin && cp /usr/sbin/runc /usr/lib/cri-o-runc/sbin/runc
 
