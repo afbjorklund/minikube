@@ -63,6 +63,45 @@ func ConvertUnsignedBytesToMB(byteSize uint64) int64 {
 	return int64(byteSize / units.MiB)
 }
 
+// ParseVMStat parses the output of the `vmstat` command
+// returns: busy, idle (%)
+func ParseVMStat(out string) (int, int, error) {
+	//procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+	//r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+	//0  0      0 24562996 667340 3463592    0    0    53    40  279  222  6  4 90  0  0
+	//0  0      0 24562680 667348 3463632    0    0     0    68 1192 7571  2  1 97  0  0
+	outlines := strings.Split(out, "\n")
+	l := len(outlines)
+	for _, line := range outlines[l-2 : l-1] {
+		parsedLine := strings.Fields(line)
+		if len(parsedLine) < 17 {
+			continue
+		}
+		us, err := strconv.Atoi(parsedLine[12])
+		if err != nil {
+			return 0, 0, err
+		}
+		sy, err := strconv.Atoi(parsedLine[13])
+		if err != nil {
+			return 0, 0, err
+		}
+		id, err := strconv.Atoi(parsedLine[14])
+		if err != nil {
+			return 0, 0, err
+		}
+		wa, err := strconv.Atoi(parsedLine[15])
+		if err != nil {
+			return 0, 0, err
+		}
+		st, err := strconv.Atoi(parsedLine[16])
+		if err != nil {
+			return 0, 0, err
+		}
+		return us + sy + wa + st, id, nil
+	}
+	return 0, 0, errors.New("No matching data found")
+}
+
 // ParseMemFree parses the output of the `free -m` command
 // returns: total, available
 func ParseMemFree(out string) (uint64, uint64, error) {
