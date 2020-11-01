@@ -23,10 +23,14 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/blang/semver"
 	units "github.com/docker/go-units"
 	"github.com/pkg/errors"
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/disk"
+	"github.com/shirou/gopsutil/mem"
 )
 
 const (
@@ -61,6 +65,40 @@ func ConvertBytesToMB(byteSize int64) int {
 // ConvertUnsignedBytesToMB converts bytes to MB
 func ConvertUnsignedBytesToMB(byteSize uint64) int64 {
 	return int64(byteSize / units.MiB)
+}
+
+// LocalCPU returns the cpu usage
+// returns: busy, idle (%)
+func LocalCPU() (int, int, error) {
+	p, err := cpu.Percent(time.Second, false)
+	if err != nil {
+		return 0, 0, err
+	}
+	return int(p[0]), int(100.0 - p[0]), nil
+}
+
+func mb(bytes uint64) uint64 {
+	return bytes / 1024 / 1024
+}
+
+// LocalMem returns the memory free
+// returns: total, available (in mb)
+func LocalMem() (uint64, uint64, error) {
+	v, err := mem.VirtualMemory()
+	if err != nil {
+		return 0, 0, err
+	}
+	return mb(v.Total), mb(v.Free), nil
+}
+
+// LocalDisk returns the disk free
+// returns: total, available (in mb)
+func LocalDisk(mountpoint string) (uint64, uint64, error) {
+	d, err := disk.Usage(mountpoint)
+	if err != nil {
+		return 0, 0, err
+	}
+	return mb(d.Total), mb(d.Free), nil
 }
 
 // ParseVMStat parses the output of the `vmstat` command
