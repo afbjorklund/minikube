@@ -106,6 +106,12 @@ RUN sh -c "echo 'deb https://download.docker.com/linux/ubuntu focal stable' > /e
     apt-key add - < docker.key && \
     clean-install docker-ce docker-ce-cli containerd.io
 
+# install buildkit
+RUN sh -c "echo 'deb https://dl.bintray.com/afbjorklund/buildkit focal main' > /etc/apt/sources.list.d/buildkit.list" && \
+    curl -L https://bintray.com/user/downloadSubjectPublicKey?username=afbjorklund -o afbjorklund-public.key.asc && \
+    apt-key add - < afbjorklund-public.key.asc && \
+    clean-install buildkit
+
 # Install cri-o/podman dependencies:
 RUN sh -c "echo 'deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_20.04/ /' > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list" && \ 
     curl -LO https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable/xUbuntu_20.04/Release.key && \
