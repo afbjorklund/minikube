@@ -22,7 +22,7 @@ package download
 
 import (
 	"io"
-	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/cheggaaa/pb/v3"
@@ -41,13 +41,16 @@ type progressBar struct {
 // display the progress of stream until closed.
 // total can be 0.
 func (cpb *progressBar) TrackProgress(src string, currentSize, totalSize int64, stream io.ReadCloser) io.ReadCloser {
+	if strings.HasSuffix(src, "sha256") {
+		return stream
+	}
 	cpb.lock.Lock()
 	defer cpb.lock.Unlock()
 	if cpb.progress == nil {
 		cpb.progress = pb.New64(totalSize)
 	}
 	p := pb.Full.Start64(totalSize)
-	p.Set("prefix", "    > "+filepath.Base(src+": "))
+	p.Set("prefix", "    ")
 	p.SetCurrent(currentSize)
 	p.Set(pb.Bytes, true)
 
