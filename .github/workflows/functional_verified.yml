@@ -122,7 +122,7 @@ jobs:
           stable: true
 
       - name: Download Binaries
-        uses: actions/download-artifact@fdafc3f9f2e2a522dc1d230e6a03de57a1e71c95
+        uses: actions/download-artifact@2a5974104b6d5dbdb2f9468a3e54da3bdd241578
         with:
           name: minikube_binaries
 
@@ -205,7 +205,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: download all extra reports
-        uses: actions/download-artifact@9fde3de0b74bd6bc202952485c264b551a4f9405
+        uses: actions/download-artifact@2a5974104b6d5dbdb2f9468a3e54da3bdd241578
       - name: upload all extra reports
         shell: bash {0}
         continue-on-error: true
