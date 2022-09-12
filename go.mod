@@ -18,7 +18,7 @@ require (
 	github.com/cheggaaa/pb/v3 v3.0.8
 	github.com/cloudevents/sdk-go/v2 v2.9.0
 	github.com/docker/docker v20.10.15+incompatible
-	github.com/docker/go-units v0.4.0
+	github.com/docker/go-units v0.5.0
 	github.com/docker/machine v0.16.2
 	github.com/elazarl/goproxy v0.0.0-20210110162100-a92cc753f88e
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
