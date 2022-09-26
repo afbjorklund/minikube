@@ -101,7 +101,7 @@ require (
 	github.com/Xuanwo/go-locale v1.1.0
 	github.com/docker/go-connections v0.4.0
 	github.com/opencontainers/runc v1.0.2
-	github.com/santhosh-tekuri/jsonschema/v5 v5.0.0
+	github.com/santhosh-tekuri/jsonschema/v5 v5.0.1
 )
 
 require (
