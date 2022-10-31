@@ -75,12 +75,12 @@ require (
 	golang.org/x/build v0.0.0-20190927031335-2835ba2e683f
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
 	golang.org/x/exp v0.0.0-20210220032938-85be41e4509f
-	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3
+	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20220503163025-988cb79eb6c6
+	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
-	golang.org/x/text v0.3.7
+	golang.org/x/text v0.4.0
 	gonum.org/v1/plot v0.11.0
 	google.golang.org/api v0.79.0
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22 // indirect
