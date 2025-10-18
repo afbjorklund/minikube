@@ -133,7 +133,12 @@ func (s Filestore) loadConfig(h *host.Host) error {
 	// struct in the migration.
 	name := h.Name
 
-	migrationPerformed := false
+	migratedHost, migrationPerformed, err := host.MigrateHost(h, data)
+	if err != nil {
+		return fmt.Errorf("Error getting migrated host: %s", err)
+	}
+
+	*h = *migratedHost
 
 	h.Name = name
 
